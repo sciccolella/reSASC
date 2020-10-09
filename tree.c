@@ -93,6 +93,25 @@ bool is_loss_valid(node_t *loss) {
   return false;
 }
 
+// This assumes that losses are valid
+bool is_recurrence_valid(node_t *recurrence) {
+  node_t *par = recurrence->parent;
+  int status = 0;
+  while (par != NULL) {
+    if (par->mut_index == recurrence->mut_index) {
+      if (par->loss == 1)
+        status--;
+      else
+        status++;
+    }
+    par = par->parent;
+  }
+  if (status == 0)
+    return true;
+
+  return false;
+}
+
 void node_detach(node_t *node) {
   if (node->next_sibling == NULL) {
     if (node->previous_sibling != NULL) {

@@ -63,6 +63,33 @@ void check_subtree_losses(node_t *node, vector *tree_vec, vector *loss_vec,
   }
 }
 
+void check_subtree_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
+                               int *r_recs, int *og_muts_idx, int *sigma,
+                               int n) {
+  if (node == NULL)
+    return;
+  check_subtree_recurrences(node->first_child, tree_vec, recs_vec, r_recs,
+                            og_muts_idx, sigma, n);
+  check_subtree_recurrences(node->next_sibling, tree_vec, recs_vec, r_recs,
+                            og_muts_idx, sigma, n);
+
+  if (node->recurrent == 1) {
+    // check if valid
+    bool valid = is_recurrence_valid(node);
+    // check if the og is valid, if it's not delete the recurrent
+    node_t *og_mut_node = vector_get(tree_vec, og_muts_idx[node->mut_index]);
+    int x = og_muts_idx[node->mut_index];
+    if (x == -1)
+      print_tree(node, 20);
+    bool og_valid = is_recurrence_valid(og_mut_node);
+
+    if (valid == false || og_valid == false) {
+      // node_delete(node, tree_vec, recs_vec, r_recs, sigma, n);
+      // TODO: maybe check deletions?
+    }
+  }
+}
+
 int prune_regraft(node_t *prune, node_t *regraft, node_t *root,
                   int monoclonal) {
   if (is_ancestor(regraft, prune) == true)
@@ -162,8 +189,6 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
     par = par->parent;
   }
 
-  // TODO: check in debug that genotype_candidate is only 0 or 1
-
   int rand_rec = 0;
   do {
     rand_rec = random_assignment(m - 1);
@@ -245,15 +270,13 @@ double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
     double best_lh = -DBL_MAX;
 
     for (int node = 0; node < node_max; node++) {
-      // for (node = 0; node < node_max; node++) {
       if (nodes_genotypes[node * m + 0] != 3) {
         double lh = 0;
 
         for (int j = 0; j < m; j++) {
           double p = 1;
-          // double p = prob(inmatrix[i][j], nodes_genotypes[node * m + j],
-          // alpha[j], beta); int I = inmatrix[i][j]; int E =
-          // nodes_genotypes[node * m + j];
+          assert(nodes_genotypes[node * m + j] == 0 ||
+                 nodes_genotypes[node * m + j] == 1);
           if (inmatrix[i][j] == 0 && nodes_genotypes[node * m + j] == 0) {
             p = like_00;
           } else if (inmatrix[i][j] == 0 &&
@@ -427,6 +450,8 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
         if (bm_res == 0) {
           check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
+          // check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
+          //                          original_muts_idx, sigma, n);
         }
       } else {
         // Add recurrent-mutation
@@ -439,15 +464,17 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         int y = k_loss[0];
         int x = original_muts_idx[0];
 
-        rec_res =
-            add_recurrent_mutation(node_res, tree_vec, m, r, r_recs, rec_vec,
-                                   MAX_RECURRENCES, original_muts_idx);
-
+        // rec_res =
+        //     add_recurrent_mutation(node_res, tree_vec, m, r, r_recs, rec_vec,
+        //                            MAX_RECURRENCES, original_muts_idx);
+        // // This shouldn't be necessary, since recurrences should be added
+        // only if correct
         if (rec_res == 0) {
           print_tree(root, 0.0);
+          // check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
+          //                          original_muts_idx, sigma, n);
+          check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
         }
-
-        // TODO: complete check subtree
       }
     } else if (move < 0.50 && (k > 0 || r > 0)) {
       int choice = -1;
@@ -669,6 +696,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     }
     assert(vector_total(&copy_tree_vec) == vector_total(&current_tree_vec));
     assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
+    print_tree(copy_root, 10);
 
     neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, r,
              &copy_losses_vec, &copy_recs_vec, copy_kloss, copy_rrces,

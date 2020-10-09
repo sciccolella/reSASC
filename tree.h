@@ -138,6 +138,8 @@ void node_detach(node_t *node);
 bool is_loss_valid(node_t *loss);
 bool is_already_lost(node_t *node, int mut_index);
 
+bool is_recurrence_valid(node_t *recurrence);
+
 void node_delete(node_t *node, vector *tree_vec, vector *loss_vec, int *k_loss,
                  int *sigma, int n);
 

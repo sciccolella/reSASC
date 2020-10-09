@@ -2,3 +2,5 @@
 .vscode
 *.o
 sasc
+sastep
+tree
