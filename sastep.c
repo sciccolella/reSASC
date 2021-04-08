@@ -228,8 +228,8 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
 
 double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
                                  int **inmatrix, int n, int m, double *alpha,
-                                 double beta, double *gammas, int *k_loss,
-                                 int CORES) {
+                                 double beta, double *gammas, double* deltas,
+                                 int *k_loss, int *k_double, int CORES) {
   int node_max = vector_total(&tree_vec);
 
   int *nodes_genotypes = calloc(node_max * m, sizeof(int));
@@ -252,6 +252,13 @@ double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
   }
 
   double maximum_likelihood = 0 - loss_weight;
+
+  double double_weigth = 0;
+  for (int j = 0; j < m; j++) {
+    double_weigth += k_double[j] * log(deltas[j]);
+  }
+
+  maximum_likelihood = maximum_likelihood - double_weigth;
 
   double like_00 = log(1 - beta);
   double like_10 = log(beta);
@@ -570,7 +577,8 @@ elpar_t *set_el_params(int single_a, int m, double *ALPHAS, double *a_mu,
                        double a_variance, double *a_xs, double *beta,
                        double b_mu, double b_variance, double *GAMMAS,
                        double *g_mu, double g_variance, double *g_xs,
-                       int single_g) {
+                       int single_g, double* DELTAS, double* d_mu,
+                       double d_variance, double* d_xs) {
   elpar_t *params = malloc(sizeof(elpar_t));
   params->single_alpha = single_a;
   params->M = m;
@@ -606,10 +614,11 @@ double accept_prob(double old_lh, double new_lh, double current_temp) {
 }
 
 node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
-               double *alpha, double beta, int **inmatrix, double start_temp,
-               double cooling_rate, double min_temp, int MAX_LOSSES,
-               int MAX_RECURRENCES, elpar_t *el_params, double *gamma, int *Cj,
-               int MONOCLONAL, int CORES) {
+               double *alpha, double beta,  double* delta, int* Fj,
+               int **inmatrix, double start_temp, double cooling_rate,
+               double min_temp, int MAX_LOSSES, int MAX_RECURRENCES,
+               elpar_t *el_params, double *gamma, int *Cj, int MONOCLONAL,
+               int CORES) {
   double current_temp = start_temp;
   double current_cooling_rate = cooling_rate;
 
@@ -654,7 +663,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
   double current_lh =
       greedy_tree_loglikelihood(current_root, tree_vec, current_sigma, inmatrix,
-                                n, m, alpha, beta, gamma, current_kloss, CORES);
+                                n, m, alpha, beta, gamma, delta, current_kloss, Fj, CORES);
 
   printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
   while (current_temp > min_temp) {
@@ -707,11 +716,11 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     if (el_params->changed == 1) {
       new_lh = greedy_tree_loglikelihood(
           copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, el_params->a_xs,
-          el_params->b_x, el_params->g_xs, copy_kloss, CORES);
+          el_params->b_x, el_params->g_xs, el_params->d_xs, copy_kloss, Fj, CORES);
     } else {
       new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma,
                                          inmatrix, n, m, alpha, beta, gamma,
-                                         copy_kloss, CORES);
+                                         delta, copy_kloss, Fj, CORES);
     }
 
     double acceptance = accept_prob(current_lh, new_lh, current_temp);
@@ -737,7 +746,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
       assert(greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma,
                                        inmatrix, n, m, alpha, beta, gamma,
-                                       copy_kloss, CORES) == new_lh);
+                                       delta, copy_kloss, Fj, CORES) == new_lh);
 
       current_lh = new_lh;
 
@@ -752,7 +761,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
       assert(greedy_tree_loglikelihood(
                  current_root, current_tree_vec, current_sigma, inmatrix, n, m,
-                 alpha, beta, gamma, current_kloss, CORES) == test_lh);
+                 alpha, beta, gamma, delta, current_kloss, Fj, CORES) == test_lh);
     } else {
       if (el_params->changed == 1) {
         el_discard(el_params, beta);

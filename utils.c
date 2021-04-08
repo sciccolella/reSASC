@@ -80,12 +80,12 @@ import_input(int **input_matrix, int rows, int columns, char *path){
         fprintf(stderr, "ERROR: Cannot open INFILE.\n");
         exit(EXIT_FAILURE);
     }
-        
+
     while (fgets(buff, sizeof buff, fp) != NULL) {
         int j = 0;
 
         buff[strcspn(buff, "\n")] = '\0';
-        
+
         token = strtok(buff, seps);
         while (token != NULL) {
             input_matrix[i][j] = atoi(token);
@@ -93,7 +93,7 @@ import_input(int **input_matrix, int rows, int columns, char *path){
             token = strtok(NULL, seps);
             j++;
         }
-        
+
 
         i++;
     }
@@ -105,7 +105,7 @@ print_help() {
     printf("SASC -- Simulated Anneling for cancer progression inference via Single Cell Sequencing.\n");
 
     //TODO: update this
-    
+
     printf("\vRequired arguments:\n");
     printf("\t-n CELLS\t\tNumber of cells in the input file.\n");
     printf("\t-m MUTATIONS\t\tNumber of mutations in the input file.\n");
@@ -122,7 +122,7 @@ print_help() {
     printf("\t-g GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
     printf("\t-r REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
     printf("\t-M \t\t\tForce SASC to infer a monoclonal tree (default: false).\n");
-    
+
     printf("\vOutput parameters (optional):\n");
     printf("\t-l \t\t\tOutput a mutational tree with cells attached to it. Otherwise cells will not be present.\n");
     printf("\t-x \t\t\tIf this option is use, SASC will also output the expected matrix E.\n");
@@ -158,6 +158,7 @@ get_arguments(int cargc, char **cargsv) {
     arguments->el_a_variance = 0;
     arguments->el_b_variance = 0;
     arguments->el_g_variance = 0;
+    arguments->el_d_variance = 0;
 
     arguments->cores = 1;
 
