@@ -49,6 +49,11 @@ typedef struct el_params {
   double g_variance;
   double *g_xs;
 
+  double* DELTAS;
+  double* d_mu;
+  double d_variance;
+  double* d_xs;
+
   int changed;
 } elpar_t;
 
@@ -56,11 +61,11 @@ int random_assignment(int MAX);
 
 double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
                                  int **inmatrix, int n, int m, double *alpha,
-                                 double beta, double *gammas, int *k_loss,
-                                 int CORES);
+                                 double beta, double *gammas, double* deltas,
+                                 int *k_loss, int *k_double, int CORES);
 
 node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
-               double *alpha, double beta, int **inmatrix, double start_temp,
+               double *alpha, double beta, double* delta, int* Fj, int **inmatrix, double start_temp,
                double cooling_rate, double min_temp, int MAX_LOSSES,
                int MAX_RECURRENCES, elpar_t *el_params, double *gamma, int *Cj,
                int MONOCLONAL, int CORES);
@@ -69,6 +74,7 @@ elpar_t *set_el_params(int single, int m, double *ALPHAS, double *a_mu,
                        double a_variance, double *a_xs, double *beta,
                        double b_mu, double b_variance, double *GAMMAS,
                        double *g_mu, double g_variance, double *g_xs,
-                       int single_g);
+                       int single_g, double* DELTAS, double* d_mu,
+                       double d_variance, double* d_xs);
 
 #endif

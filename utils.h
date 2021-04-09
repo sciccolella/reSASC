@@ -36,6 +36,7 @@ typedef struct Arguments {
     double beta;
     double gamma;
     char gamma_file[255];
+    char delta_file[255];
     char mut_file[255];
     char cell_file[255];
     int print_leaves;
@@ -47,6 +48,7 @@ typedef struct Arguments {
     double el_a_variance;
     double el_b_variance;
     double el_g_variance;
+    double el_d_variance;
     int cores;
 } args_t;
 
