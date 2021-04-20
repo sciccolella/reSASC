@@ -32,6 +32,7 @@
 typedef struct el_params {
   int single_alpha;
   int single_gamma;
+  int single_delta;
   int M;
 
   double *ALPHAS;
@@ -62,7 +63,7 @@ int random_assignment(int MAX);
 double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
                                  int **inmatrix, int n, int m, double *alpha,
                                  double beta, double *gammas, double* deltas,
-                                 int *k_loss, int *k_double, int CORES);
+                                 int *k_loss, int *k_recurrent, int CORES);
 
 node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                double *alpha, double beta, double* delta, int* Fj, int **inmatrix, double start_temp,
