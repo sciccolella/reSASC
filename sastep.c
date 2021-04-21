@@ -84,7 +84,7 @@ void check_subtree_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
     bool og_valid = is_recurrence_valid(og_mut_node);
 
     if (valid == false || og_valid == false) {
-      // node_delete(node, tree_vec, recs_vec, r_recs, sigma, n);
+      node_delete(node, tree_vec, recs_vec, r_recs, sigma, n);
       // TODO: maybe check deletions?
     }
   }
@@ -229,7 +229,7 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
 double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
                                  int **inmatrix, int n, int m, double *alpha,
                                  double beta, double *gammas, double* deltas,
-                                 int *k_loss, int *k_double, int CORES) {
+                                 int *k_loss, int *k_recurrent, int CORES) {
   int node_max = vector_total(&tree_vec);
 
   int *nodes_genotypes = calloc(node_max * m, sizeof(int));
@@ -255,7 +255,7 @@ double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
 
   double double_weigth = 0;
   for (int j = 0; j < m; j++) {
-    double_weigth += k_double[j] * log(deltas[j]);
+    double_weigth += (k_recurrent[j] -1) * log(deltas[j]);
   }
 
   maximum_likelihood = maximum_likelihood - double_weigth;
@@ -379,6 +379,21 @@ void learn_g(elpar_t *el_params) {
   }
 }
 
+void learn_d(elpar_t *el_params) {
+  double x = 0;
+  if (el_params->single_delta == 1) {
+    x = gen_gaussian(el_params->d_mu[0], el_params->d_variance);
+    for (int i = 0; i < el_params->M; i++) {
+      el_params->d_xs[i] = x;
+    }
+  } else {
+    for (int i = 0; i < el_params->M; i++) {
+      x = gen_gaussian(el_params->d_mu[i], el_params->d_variance);
+      el_params->d_xs[i] = x;
+    }
+  }
+}
+
 void params_learning(elpar_t *el_params) {
   double choice = genrand_real1();
 
@@ -426,7 +441,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
               int *original_muts_idx, elpar_t *el_params, int monoclonal) {
   double el = genrand_real1();
   if (el < 0.1 && (el_params->a_variance > 0 || el_params->b_variance > 0 ||
-                   el_params->g_variance > 0)) {
+                   el_params->g_variance > 0 || el_params->d_variance > 0)) {
     params_learning(el_params);
   } else {
     double move = genrand_real1();
@@ -471,17 +486,16 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         int y = k_loss[0];
         int x = original_muts_idx[0];
 
-        // rec_res =
-        //     add_recurrent_mutation(node_res, tree_vec, m, r, r_recs, rec_vec,
-        //                            MAX_RECURRENCES, original_muts_idx);
+        rec_res = add_recurrent_mutation(node_res, tree_vec, m, r, r_recs, rec_vec,
+                                          MAX_RECURRENCES, original_muts_idx);
         // // This shouldn't be necessary, since recurrences should be added
         // only if correct
-        if (rec_res == 0) {
-          print_tree(root, 0.0);
+        //if (rec_res == 0) {
+        //  print_tree(root, 0.0);
           // check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
           //                          original_muts_idx, sigma, n);
-          check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-        }
+        //  check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
+        //}
       }
     } else if (move < 0.50 && (k > 0 || r > 0)) {
       int choice = -1;
@@ -497,7 +511,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
       }
       assert(choice != -1);
       if (choice == 0) {
-        // Delete a mutation
+        // Delete a backmutation
         node_t *node_res = NULL;
         if (vector_total(loss_vec) == 0)
           return;
@@ -509,7 +523,17 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
         node_delete(node_res, tree_vec, loss_vec, k_loss, sigma, n);
       } else {
-        // TODO: remove recurrent mutation
+        // Delete a recurrent mutation
+        node_t *node_res = NULL;
+        if (vector_total(rec_vec) == 0)
+          return;
+
+        int node_max = vector_total(rec_vec) - 1;
+        assert(node_max >= 0);
+        int ip = random_assignment(node_max);
+        node_res = vector_get(rec_vec, ip);
+
+        node_delete(node_res, tree_vec, rec_vec, r_recs, sigma, n);
       }
     } else if ((move < 0.75 && (k > 0 || r > 0)) ||
                (move < 0.50 && (k == 0 && r == 0))) {
@@ -663,7 +687,8 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
   double current_lh =
       greedy_tree_loglikelihood(current_root, tree_vec, current_sigma, inmatrix,
-                                n, m, alpha, beta, gamma, delta, current_kloss, Fj, CORES);
+                                n, m, alpha, beta, gamma, delta, current_kloss,
+                                current_rrecs, CORES);
 
   printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
   while (current_temp > min_temp) {
@@ -716,11 +741,11 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     if (el_params->changed == 1) {
       new_lh = greedy_tree_loglikelihood(
           copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, el_params->a_xs,
-          el_params->b_x, el_params->g_xs, el_params->d_xs, copy_kloss, Fj, CORES);
+          el_params->b_x, el_params->g_xs, el_params->d_xs, copy_kloss, copy_rrces, CORES);
     } else {
       new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma,
                                          inmatrix, n, m, alpha, beta, gamma,
-                                         delta, copy_kloss, Fj, CORES);
+                                         delta, copy_kloss, copy_rrces, CORES);
     }
 
     double acceptance = accept_prob(current_lh, new_lh, current_temp);
@@ -746,7 +771,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
       assert(greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma,
                                        inmatrix, n, m, alpha, beta, gamma,
-                                       delta, copy_kloss, Fj, CORES) == new_lh);
+                                       delta, copy_kloss, copy_rrces, CORES) == new_lh);
 
       current_lh = new_lh;
 
@@ -761,7 +786,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
       assert(greedy_tree_loglikelihood(
                  current_root, current_tree_vec, current_sigma, inmatrix, n, m,
-                 alpha, beta, gamma, delta, current_kloss, Fj, CORES) == test_lh);
+                 alpha, beta, gamma, delta, current_kloss, current_rrecs, CORES) == test_lh);
     } else {
       if (el_params->changed == 1) {
         el_discard(el_params, beta);
@@ -796,6 +821,10 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
   for (int i = 0; i < m; i++) {
     Cj[i] = current_kloss[i];
+  }
+
+  for (int i = 0; i < m; i++) {
+    Fj[i] = current_rrecs[i];
   }
 
   // Return best TREE
