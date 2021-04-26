@@ -31,10 +31,12 @@ typedef struct Arguments {
     int m;
     int k;
     int max_del;
+    int max_copies;
     double alpha;
     char alpha_file[255];
     double beta;
     double gamma;
+    double delta;
     char gamma_file[255];
     char delta_file[255];
     char mut_file[255];

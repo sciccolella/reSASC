@@ -398,14 +398,52 @@ void params_learning(elpar_t *el_params) {
   double choice = genrand_real1();
 
   if (el_params->a_variance > 0 && el_params->b_variance > 0 &&
-      el_params->g_variance > 0) {
-    if (choice < 0.33) {
+      el_params->g_variance > 0 && el_params->d_variance > 0) {
+    if (choice < 0.25) {
       learn_a(el_params);
-    } else if (choice < 0.66) {
+    } else if (choice < 0.50) {
       learn_b(el_params);
-    } else {
+    } else if (choice < 0.75){
       learn_g(el_params);
+    } else {
+      learn_d(el_params);
     }
+  } else if(el_params->a_variance > 0 && el_params->b_variance > 0 &&
+       el_params->g_variance > 0){
+      if(choice < 0.33) {
+        learn_a(el_params);
+      } else if (choice < 0.66) {
+        learn_b(el_params);
+      } else {
+        learn_g(el_params);
+      }
+  } else if(el_params->a_variance > 0 && el_params->b_variance > 0 &&
+       el_params->d_variance > 0){
+      if(choice < 0.33) {
+        learn_a(el_params);
+      } else if (choice < 0.66) {
+        learn_b(el_params);
+      } else {
+        learn_d(el_params);
+      }
+  } else if(el_params->a_variance > 0 && el_params->g_variance > 0 &&
+       el_params->d_variance > 0){
+      if(choice < 0.33) {
+        learn_a(el_params);
+      } else if (choice < 0.66) {
+        learn_g(el_params);
+      } else {
+        learn_d(el_params);
+      }
+  } else if(el_params->g_variance > 0 && el_params->b_variance > 0 &&
+       el_params->d_variance > 0){
+      if(choice < 0.33) {
+        learn_g(el_params);
+      } else if (choice < 0.66) {
+        learn_b(el_params);
+      } else {
+        learn_d(el_params);
+      }
   } else if (el_params->a_variance > 0 && el_params->b_variance > 0) {
     if (choice < 0.5) {
       learn_a(el_params);
@@ -418,9 +456,27 @@ void params_learning(elpar_t *el_params) {
     } else {
       learn_g(el_params);
     }
+  } else if (el_params->a_variance > 0 && el_params->d_variance > 0) {
+    if (choice < 0.5) {
+      learn_a(el_params);
+    } else {
+      learn_d(el_params);
+    }
   } else if (el_params->b_variance > 0 && el_params->g_variance > 0) {
     if (choice < 0.5) {
       learn_b(el_params);
+    } else {
+      learn_g(el_params);
+    }
+  } else if (el_params->b_variance > 0 && el_params->d_variance > 0) {
+    if (choice < 0.5) {
+      learn_a(el_params);
+    } else {
+      learn_d(el_params);
+    }
+  } else if (el_params->d_variance > 0 && el_params->g_variance > 0) {
+    if (choice < 0.5) {
+      learn_d(el_params);
     } else {
       learn_g(el_params);
     }
@@ -430,6 +486,8 @@ void params_learning(elpar_t *el_params) {
     learn_b(el_params);
   } else if (el_params->g_variance > 0) {
     learn_g(el_params);
+  } else if (el_params->d_variance >0) {
+    learn_d(el_params);
   }
 
   el_params->changed = 1;
@@ -602,7 +660,7 @@ elpar_t *set_el_params(int single_a, int m, double *ALPHAS, double *a_mu,
                        double b_mu, double b_variance, double *GAMMAS,
                        double *g_mu, double g_variance, double *g_xs,
                        int single_g, double* DELTAS, double* d_mu,
-                       double d_variance, double* d_xs) {
+                       double d_variance, double* d_xs, int single_d) {
   elpar_t *params = malloc(sizeof(elpar_t));
   params->single_alpha = single_a;
   params->M = m;
@@ -624,6 +682,13 @@ elpar_t *set_el_params(int single_a, int m, double *ALPHAS, double *a_mu,
   params->g_mu = g_mu;
   params->g_variance = g_variance;
   params->g_xs = g_xs;
+
+  params->DELTAS = DELTAS;
+  params->d_mu = d_mu;
+  params->d_variance = d_variance;
+  params->d_xs = d_xs;
+
+  params->single_delta = single_d;
 
   return params;
 }

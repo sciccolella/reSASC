@@ -171,6 +171,7 @@ get_arguments(int cargc, char **cargsv) {
 
     double single_alpha;
     double single_gamma;
+    double single_delta;
     int res;
 
     opterr = 0;
@@ -208,6 +209,15 @@ get_arguments(int cargc, char **cargsv) {
                     strcpy(arguments->gamma_file, optarg);
                 }
                 break;
+            case 'd':
+                res = sscanf(optarg, "%lf", &single_delta);
+                if (res == 1) {
+                    arguments->delta = single_delta;
+                } else {
+                    arguments->delta = -1;
+                    strcpy(arguments->delta_file, optarg);
+                }
+                break;
             case 'k':
                 arguments->k = atoi(optarg);
                 inserted_args++;
@@ -225,8 +235,11 @@ get_arguments(int cargc, char **cargsv) {
             case 'h':
                 print_help();
                 break;
-            case 'd':
+            case 'z':
                 arguments->max_del = atoi(optarg);
+                break;
+            case 'c':
+                arguments->max_copies = atoi(optarg);
                 break;
             case 'l':
                 arguments->print_leaves = 1;
@@ -257,6 +270,9 @@ get_arguments(int cargc, char **cargsv) {
                 break;
             case 'G':
                 sscanf(optarg, "%lf", &arguments->el_g_variance);
+                break;
+            case 'D':
+                sscanf(optarg, "%lf", &arguments->el_d_variance);
                 break;
             case 'p':
                 arguments->cores = atoi(optarg);
