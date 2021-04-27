@@ -76,6 +76,6 @@ elpar_t *set_el_params(int single, int m, double *ALPHAS, double *a_mu,
                        double b_mu, double b_variance, double *GAMMAS,
                        double *g_mu, double g_variance, double *g_xs,
                        int single_g, double* DELTAS, double* d_mu,
-                       double d_variance, double* d_xs);
+                       double d_variance, double* d_xs, int single_d);
 
 #endif

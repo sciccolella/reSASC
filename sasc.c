@@ -58,9 +58,10 @@ int main(int argc, char **argv) {
 
   int SINGLE_ALPHA = 0;
   int SINGLE_GAMMA = 0;
+  int SINGLE_DELTA = 0;
 
   int MAX_LOSSES = arguments->max_del;
-  int MAX_RECURRENCES = 5;
+  int MAX_RECURRENCES = arguments->max_copies;
   // TODO: fix ^
 
   int MONOCLONAL = arguments->monoclonal;
@@ -204,6 +205,39 @@ int main(int argc, char **argv) {
     SINGLE_GAMMA = 0;
   }
 
+  // Create multi-delta rates
+  double MULTI_DELTAS[M];
+  if (arguments->delta != -1) {
+    for (int i = 0; i < M; i++) {
+      MULTI_DELTAS[i] = arguments->delta;
+    }
+    SINGLE_DELTA = 1;
+  } else {
+    FILE *fp;
+    char buff[255];
+
+    fp = fopen(arguments->delta_file, "r");
+    int i = 0;
+    if (fp == NULL) {
+      fprintf(stderr, "ERROR: Cannot open DELTA FILE.\n");
+      exit(EXIT_FAILURE);
+    }
+
+    while (fgets(buff, sizeof buff, fp) != NULL) {
+      buff[strcspn(buff, "\n")] = '\0';
+      sscanf(buff, "%lf", &MULTI_DELTAS[i]);
+      i++;
+    }
+    fclose(fp);
+
+    if (i != M) {
+      fprintf(stderr,
+              "ERROR: Dimension of mutations and DELTAS are different.\n");
+      exit(EXIT_FAILURE);
+    }
+    SINGLE_DELTA = 0;
+  }
+
   // Itialize MT19937
 
   unsigned long init[10], length = 10;
@@ -254,15 +288,15 @@ int main(int argc, char **argv) {
     a_xs[i] = MULTI_ALPHAS[i];
     g_mu[i] = MULTI_GAMMAS[i];
     g_xs[i] = MULTI_GAMMAS[i];
+    d_mu[i] = MULTI_DELTAS[i];
+    d_xs[i] = MULTI_DELTAS[i];
   }
-
-  double MULTI_DELTAS[M];
 
   elpar_t *el_params = set_el_params(
       SINGLE_ALPHA, M, MULTI_ALPHAS, a_mu, arguments->el_a_variance, a_xs,
       &BETA, BETA, arguments->el_b_variance, MULTI_GAMMAS, g_mu,
       arguments->el_g_variance, g_xs, SINGLE_GAMMA, MULTI_DELTAS, d_mu,
-      arguments->el_d_variance, d_xs);
+      arguments->el_d_variance, d_xs, SINGLE_DELTA);
 
   // Generate Cj
   int Cj[M];
@@ -430,7 +464,8 @@ int main(int argc, char **argv) {
 
   printf("alpha: %lf\n", MULTI_ALPHAS[0]);
   printf("beta: %lf\n", el_params->b_x);
-  printf("alpha: %lf\n", MULTI_GAMMAS[0]);
+  printf("gamma: %lf\n", MULTI_GAMMAS[0]);
+  printf("delta: %lf\n", MULTI_DELTAS[0]);
 
   return 0;
 }
