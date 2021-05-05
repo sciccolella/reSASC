@@ -146,6 +146,7 @@ get_arguments(int cargc, char **cargsv) {
     args_t *arguments = malloc(sizeof(args_t));
 
     arguments->max_del = INT_MAX;
+    arguments->max_copies = INT_MAX;
     arguments->print_leaves = 0;
     arguments->print_expected = 0;
     arguments->monoclonal = 0;
@@ -176,7 +177,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:k:i:e:E:d:lxMr:S:C:A:B:G:p:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:c:k:i:z:e:E:d:lxMr:S:C:A:B:G:D:R:p:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -222,6 +223,10 @@ get_arguments(int cargc, char **cargsv) {
                 arguments->k = atoi(optarg);
                 inserted_args++;
                 break;
+            case 'r':
+                arguments->r = atoi(optarg);
+                inserted_args++;
+                break;
             case 'i':
                 strcpy(arguments->infile, optarg);
                 inserted_args++;
@@ -250,7 +255,7 @@ get_arguments(int cargc, char **cargsv) {
             case 'M':
                 arguments->monoclonal = 1;
                 break;
-            case 'r':
+            case 'R':
                 arguments->repetitions = atoi(optarg);
                 break;
             case 'v':
@@ -289,7 +294,7 @@ get_arguments(int cargc, char **cargsv) {
         }
     }
 
-    if (inserted_args != 6) {
+    if (inserted_args != 7) {
         fprintf (stderr, "ERROR: Not all required arguments were passed.\n");
         exit(EXIT_FAILURE);
     }
@@ -298,6 +303,11 @@ get_arguments(int cargc, char **cargsv) {
         arguments->max_del = 0;
     if (arguments->max_del == 0)
         arguments->k = 0;
+
+    if (arguments->r == 0)
+        arguments->max_copies = 0;
+    if (arguments->max_copies == 0)
+        arguments->r = 0;
 
     return arguments;
 }
