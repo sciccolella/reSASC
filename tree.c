@@ -61,6 +61,8 @@ void node_append(node_t *parent, node_t *node) {
 }
 
 bool is_ancestor(node_t *node, node_t *cand_ancestor) {
+  if(node == NULL)
+    return false;
   node_t *par = node->parent;
 
   while (par != NULL) {
@@ -95,6 +97,8 @@ bool is_loss_valid(node_t *loss) {
 
 // This assumes that losses are valid
 bool is_recurrence_valid(node_t *recurrence) {
+  if(recurrence == NULL)
+    return false;
   node_t *par = recurrence->parent;
   int status = 0;
   while (par != NULL) {

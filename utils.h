@@ -30,6 +30,7 @@ typedef struct Arguments {
     int n;
     int m;
     int k;
+    int r;
     int max_del;
     int max_copies;
     double alpha;

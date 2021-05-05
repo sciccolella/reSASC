@@ -79,8 +79,9 @@ void check_subtree_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
     // check if the og is valid, if it's not delete the recurrent
     node_t *og_mut_node = vector_get(tree_vec, og_muts_idx[node->mut_index]);
     int x = og_muts_idx[node->mut_index];
-    if (x == -1)
-      print_tree(node, 20);
+    if (x == -1){
+      valid = false;
+    }
     bool og_valid = is_recurrence_valid(og_mut_node);
 
     if (valid == false || og_valid == false) {
@@ -200,7 +201,9 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
 
   // Current node is ancestor of the to-be-recurred mutation
   int node_id = original_mut_idx[rand_rec];
-  node_t *candidate_node = vector_get(tree_vec, original_mut_idx[rand_rec]);
+  node_t *candidate_node = vector_get(tree_vec, node_id);
+  if (candidate_node == NULL)
+    return 1;
   if (is_ancestor(candidate_node, node))
     return 1;
   // and is not ancestor of any of its recurrences (if any)
@@ -217,6 +220,9 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
   node_t *node_rec = node_new(label, rand_rec, vector_total(tree_vec));
   node_rec->recurrent = 1;
   r_rec[node_rec->mut_index] += 1;
+
+  vector_add(tree_vec, node_rec);
+  vector_add(recurrents_vec, node_rec);
 
   par = node->parent;
   node_detach(node);
@@ -530,8 +536,8 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
         if (bm_res == 0) {
           check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-          // check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
-          //                          original_muts_idx, sigma, n);
+          check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
+                                    original_muts_idx, sigma, n);
         }
       } else {
         // Add recurrent-mutation
@@ -548,12 +554,12 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
                                           MAX_RECURRENCES, original_muts_idx);
         // // This shouldn't be necessary, since recurrences should be added
         // only if correct
-        //if (rec_res == 0) {
+        if (rec_res == 0) {
         //  print_tree(root, 0.0);
-          // check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
-          //                          original_muts_idx, sigma, n);
-        //  check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-        //}
+          check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
+                                      original_muts_idx, sigma, n);
+          check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
+        }
       }
     } else if (move < 0.50 && (k > 0 || r > 0)) {
       int choice = -1;
@@ -795,6 +801,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     }
     assert(vector_total(&copy_tree_vec) == vector_total(&current_tree_vec));
     assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
+    assert(vector_total(&copy_recs_vec) == vector_total(&current_recs_vec));
     print_tree(copy_root, 10);
 
     neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, r,
@@ -862,6 +869,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     destroy_tree(copy_root);
     vector_free(&copy_tree_vec);
     vector_free(&copy_losses_vec);
+    vector_free(&copy_recs_vec);
 
     if (current_temp <= 0.25 * start_temp) {
       current_temp *= (1 - (current_cooling_rate * 0.1));
