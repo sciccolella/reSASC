@@ -110,17 +110,19 @@ print_help() {
     printf("\t-n CELLS\t\tNumber of cells in the input file.\n");
     printf("\t-m MUTATIONS\t\tNumber of mutations in the input file.\n");
     printf("\t-k DOLLOK\t\tK value of Dollo(k) model.\n");
+    printf("\t-r DOLLOR\t\tR value of Dollo(r) model.\n");
     printf("\t-a ALPHA\t\tFalse Negative rate in the input file or path to FN rates file.\n");
     printf("\t-b BETA\t\t\tFalse Positive rate in the input file.\n");
     printf("\t-i INFILE\t\tPath of the input file.\n");
 
     printf("\vOptional arguments:\n");
     printf("\vModel parameters (optional):\n");
-    printf("\t-d DELETIONS\t\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
+    printf("\t-z DELETIONS\t\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
+    printf("\t-c COPIES\t\tMaximum number of total recurrences allowed in the solution (default: INT_MAX).\n");
     printf("\t-e MUTFILE\t\tPath of the file containing mutations' names.\n");
     printf("\t-E CELLFILE\t\tPath of the file containing cells' names.\n");
     printf("\t-g GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
-    printf("\t-r REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
+    printf("\t-R REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
     printf("\t-M \t\t\tForce SASC to infer a monoclonal tree (default: false).\n");
 
     printf("\vOutput parameters (optional):\n");
@@ -135,6 +137,7 @@ print_help() {
     printf("\t-A ALPHASTDV\t\tStandard deviation for new FN discovery.\n");
     printf("\t-B BETASTDV\t\tStandard deviation for new FP discovery.\n");
     printf("\t-G GAMMASTDV\t\tStandard deviation for new GAMMA discovery.\n");
+    printf("\t-D DELTASTDV\t\tStandard deviation dor new DELTA discovery.\n");
 
     exit(EXIT_SUCCESS);
 }

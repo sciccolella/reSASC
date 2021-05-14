@@ -202,8 +202,7 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
   // Current node is ancestor of the to-be-recurred mutation
   int node_id = original_mut_idx[rand_rec];
   node_t *candidate_node = vector_get(tree_vec, node_id);
-  if (candidate_node == NULL)
-    return 1;
+
   if (is_ancestor(candidate_node, node))
     return 1;
   // and is not ancestor of any of its recurrences (if any)
@@ -261,7 +260,7 @@ double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
 
   double double_weigth = 0;
   for (int j = 0; j < m; j++) {
-    double_weigth += (k_recurrent[j] -1) * log(deltas[j]);
+    double_weigth += (k_recurrent[j]) * log(deltas[j]);
   }
 
   maximum_likelihood = maximum_likelihood - double_weigth;
@@ -335,6 +334,7 @@ void el_commit(elpar_t *el_params, double *beta) {
   for (int i = 0; i < el_params->M; i++) {
     el_params->ALPHAS[i] = el_params->a_xs[i];
     el_params->GAMMAS[i] = el_params->g_xs[i];
+    el_params->DELTAS[i] = el_params->d_xs[i];
   }
   *beta = el_params->b_x;
   el_params->changed = 0;
@@ -344,6 +344,7 @@ void el_discard(elpar_t *el_params, double beta) {
   for (int i = 0; i < el_params->M; i++) {
     el_params->a_xs[i] = el_params->ALPHAS[i];
     el_params->g_xs[i] = el_params->GAMMAS[i];
+    el_params->d_xs[i] = el_params->DELTAS[i];
   }
   el_params->b_x = beta;
   el_params->changed = 0;
@@ -492,7 +493,7 @@ void params_learning(elpar_t *el_params) {
     learn_b(el_params);
   } else if (el_params->g_variance > 0) {
     learn_g(el_params);
-  } else if (el_params->d_variance >0) {
+  } else if (el_params->d_variance > 0) {
     learn_d(el_params);
   }
 
@@ -603,7 +604,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
                (move < 0.50 && (k == 0 && r == 0))) {
       // switch nodes
       node_t *u = NULL;
-      while (u == NULL || u->parent == NULL || u->loss == 1) {
+      while (u == NULL || u->parent == NULL || u->loss == 1 || u->recurrent == 1) {
         int node_max = vector_total(tree_vec) - 1;
         assert(node_max > 0);
         int ip = random_assignment(node_max);
@@ -611,7 +612,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
       }
 
       node_t *v = NULL;
-      while (v == NULL || v->parent == NULL || v->loss == 1 || v->id == u->id) {
+      while (v == NULL || v->parent == NULL || v->loss == 1 || v->recurrent == 1 || v->id == u->id) {
         int node_max = vector_total(tree_vec) - 1;
         assert(node_max > 0);
         int ig = random_assignment(node_max);
