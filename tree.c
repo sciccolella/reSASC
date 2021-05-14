@@ -313,7 +313,7 @@ node_t *nodecpy(char *label, int mut_index, int id, int loss, int recurrent) {
 
 void rec_treecpy(node_t *node, node_t *cnode, vector *tree_vec,
                  vector *losses_vec, vector *recs_vec, int n,
-                 int original_mut_idx[]) {
+                 int *original_mut_idx) {
   node_t *child = node->first_child;
   if (child == NULL)
     return;
@@ -335,6 +335,7 @@ void rec_treecpy(node_t *node, node_t *cnode, vector *tree_vec,
     }
     if (original_mut_idx != NULL && copy->recurrent == 0 && copy->loss == 0) {
       assert(original_mut_idx[copy->mut_index] == -1);
+
       original_mut_idx[copy->mut_index] = copy->id;
     }
 
