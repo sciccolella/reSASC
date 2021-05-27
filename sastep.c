@@ -78,6 +78,11 @@ void check_subtree_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
     bool valid = is_recurrence_valid(node);
     // check if the og is valid, if it's not delete the recurrent
     node_t *og_mut_node = vector_get(tree_vec, og_muts_idx[node->mut_index]);
+
+    if(node->mut_index != og_mut_node->mut_index){
+      exit(0);
+    }
+
     int x = og_muts_idx[node->mut_index];
     if (x == -1){
       valid = false;
@@ -89,6 +94,28 @@ void check_subtree_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
       // TODO: maybe check deletions?
     }
   }
+}
+
+void check_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
+                               int *r_recs, int *og_muts_idx, int *sigma,
+                               int n) {
+
+  if (node == NULL)
+    return;
+
+  node_t* par = node->parent;
+
+  while(par != NULL){
+    if(par->recurrent == 1){
+      check_subtree_recurrences(par, tree_vec, recs_vec, r_recs, og_muts_idx,
+                              sigma, n);
+      return;
+    }
+    par = par->parent;
+  }
+
+  check_subtree_recurrences(node, tree_vec, recs_vec, r_recs, og_muts_idx,
+                          sigma, n);
 }
 
 int prune_regraft(node_t *prune, node_t *regraft, node_t *root,
@@ -500,6 +527,24 @@ void params_learning(elpar_t *el_params) {
   el_params->changed = 1;
 }
 
+void rec_mut_idx(node_t *node, int *original_muts_idx){
+  node_t* child = node->first_child;
+  if (child == NULL)
+    return;
+
+  while(child != NULL){
+    if (original_muts_idx != NULL && child->recurrent == 0 && child->loss == 0) {
+      assert(original_muts_idx[child->mut_index] == -1);
+
+      original_muts_idx[child->mut_index] = child->id;
+    }
+
+    rec_mut_idx(child, original_muts_idx);
+
+    child = child->next_sibling;
+  }
+}
+
 void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
               int r, vector *loss_vec, vector *rec_vec, int *k_loss,
               int *r_recs, int MAX_LOSSES, int MAX_RECURRENCES,
@@ -537,7 +582,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
         if (bm_res == 0) {
           check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-          check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
+          check_recurrences(node_res, tree_vec, rec_vec, r_recs,
                                     original_muts_idx, sigma, n);
         }
       } else {
@@ -548,16 +593,13 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         int ip = random_assignment(vector_total(tree_vec) - 1);
         node_res = vector_get(tree_vec, ip);
 
-        int y = k_loss[0];
-        int x = original_muts_idx[0];
-
         rec_res = add_recurrent_mutation(node_res, tree_vec, m, r, r_recs, rec_vec,
                                           MAX_RECURRENCES, original_muts_idx);
         // // This shouldn't be necessary, since recurrences should be added
         // only if correct
         if (rec_res == 0) {
         //  print_tree(root, 0.0);
-          check_subtree_recurrences(node_res, tree_vec, rec_vec, r_recs,
+          check_recurrences(node_res, tree_vec, rec_vec, r_recs,
                                       original_muts_idx, sigma, n);
           check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
         }
@@ -604,7 +646,8 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
                (move < 0.50 && (k == 0 && r == 0))) {
       // switch nodes
       node_t *u = NULL;
-      while (u == NULL || u->parent == NULL || u->loss == 1 || u->recurrent == 1) {
+      while (u == NULL || u->parent == NULL || u->loss == 1 ||
+            u->recurrent == 1) {
         int node_max = vector_total(tree_vec) - 1;
         assert(node_max > 0);
         int ip = random_assignment(node_max);
@@ -612,7 +655,8 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
       }
 
       node_t *v = NULL;
-      while (v == NULL || v->parent == NULL || v->loss == 1 || v->recurrent == 1 || v->id == u->id) {
+      while (v == NULL || v->parent == NULL || v->loss == 1 ||
+            v->recurrent == 1 || v->id == u->id) {
         int node_max = vector_total(tree_vec) - 1;
         assert(node_max > 0);
         int ig = random_assignment(node_max);
@@ -620,6 +664,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
       }
 
       int mut_tmp;
+      int ori_mut_tmp;
       char label_tmp[255];
 
       mut_tmp = u->mut_index;
@@ -630,6 +675,15 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
       v->mut_index = mut_tmp;
       strcpy(v->label, label_tmp);
+
+      ori_mut_tmp = original_muts_idx[u->mut_index];
+      original_muts_idx[u->mut_index] = original_muts_idx[v->mut_index];
+      original_muts_idx[v->mut_index] = ori_mut_tmp;
+
+      check_recurrences(u, tree_vec, rec_vec, r_recs, original_muts_idx,
+                      sigma, n);
+      check_recurrences(v, tree_vec, rec_vec, r_recs, original_muts_idx,
+                      sigma, n);
 
       check_subtree_losses(u, tree_vec, loss_vec, k_loss, sigma, n);
       check_subtree_losses(v, tree_vec, loss_vec, k_loss, sigma, n);
@@ -657,6 +711,29 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         pr_res = prune_regraft(prune, graft, root, monoclonal);
         prune_res = prune;
       }
+
+      for (int i = 0; i < m; i++) {
+        original_muts_idx[i] = -1;
+      }
+
+      node_t *child = root->first_child;
+
+      while(child != NULL){
+
+        if (original_muts_idx != NULL && child->recurrent == 0 &&
+           child->loss == 0) {
+          assert(original_mut_idx[child->mut_index] == -1);
+
+          original_muts_idx[child->mut_index] = child->id;
+        }
+
+        rec_mut_idx(child, original_muts_idx);
+
+        child = child->next_sibling;
+      }
+      check_recurrences(prune_res, tree_vec, rec_vec, r_recs,
+                      original_muts_idx, sigma, n);
+
       check_subtree_losses(prune_res, tree_vec, loss_vec, k_loss, sigma, n);
     }
   }

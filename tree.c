@@ -73,14 +73,36 @@ bool is_ancestor(node_t *node, node_t *cand_ancestor) {
   return false;
 }
 
+void push(int node, int *stack, int *top){
+  *top = *top + 1;
+  stack[*top] = node;
+}
+bool pop(int *stack, int *top){
+  if(*top <= 0){
+    return false;
+ }
+  else{
+    *top = *top - 1;
+    return true;
+ }
+}
+
 bool is_already_lost(node_t *node, int mut_index) {
   node_t *par = node->parent;
+  int status = 0;
 
   while (par != NULL) {
-    if (par->loss == 1 && par->mut_index == mut_index)
-      return true;
+    if (par->mut_index == mut_index){
+      if(par->loss == 1)
+        status--;
+      else
+        status++;
+      }
     par = par->parent;
   }
+  if (status == 0)
+    return true;
+
   return false;
 }
 
@@ -88,7 +110,7 @@ bool is_loss_valid(node_t *loss) {
   node_t *par = loss->parent;
 
   while (par != NULL) {
-    if (par->mut_index == loss->mut_index)
+    if (par->mut_index == loss->mut_index && par->loss == 0)
       return true;
     par = par->parent;
   }
@@ -97,6 +119,10 @@ bool is_loss_valid(node_t *loss) {
 
 // This assumes that losses are valid
 bool is_recurrence_valid(node_t *recurrence) {
+  int stack[100];
+  int top = 0;
+  bool check;
+
   if(recurrence == NULL)
     return false;
   node_t *par = recurrence->parent;
@@ -104,13 +130,16 @@ bool is_recurrence_valid(node_t *recurrence) {
   while (par != NULL) {
     if (par->mut_index == recurrence->mut_index) {
       if (par->loss == 1)
-        status--;
-      else
-        status++;
+        push(recurrence->mut_index, stack, &top);
+      else{
+        check = pop(stack, &top);
+        if(check == false)
+          return false;
+      }
     }
     par = par->parent;
   }
-  if (status == 0)
+  if (top == 0)
     return true;
 
   return false;
