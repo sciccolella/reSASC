@@ -44,7 +44,7 @@ int random_assignment(int MAX) {
   return (int)(randval % (MAX + 1));
 }
 
-void check_subtree_losses(node_t *node, vector *tree_vec, vector *loss_vec,
+/*void check_subtree_losses(node_t *node, vector *tree_vec, vector *loss_vec,
                           int *k_loss, int *sigma, int n) {
   if (node == NULL)
     return;
@@ -58,7 +58,9 @@ void check_subtree_losses(node_t *node, vector *tree_vec, vector *loss_vec,
     bool lost = is_already_lost(node, node->mut_index);
 
     if (valid == false || lost == true) {
-      node_delete(node, tree_vec, loss_vec, k_loss, sigma, n);
+      if(vector_get(tree_vec, node->id) != NULL){
+        node_delete(node, tree_vec, loss_vec, k_loss, sigma, n);
+      }
     }
   }
 }
@@ -89,33 +91,102 @@ void check_subtree_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
     }
     bool og_valid = is_recurrence_valid(og_mut_node);
 
+    if (valid == false || og_valid == false)
+      if(vector_get(tree_vec, node->id) != NULL)
+        node_delete(node, tree_vec, recs_vec, r_recs, sigma, n);
+  }
+}*/
+
+void check_subtree(node_t *node, vector *tree_vec, vector *recs_vec,
+                               int *r_recs, int *og_muts_idx, int *sigma,
+                               int n, vector *loss_vec, int *k_loss) {
+  if (node == NULL)
+    return;
+  check_subtree(node->first_child, tree_vec, recs_vec, r_recs,
+                            og_muts_idx, sigma, n, loss_vec, k_loss);
+  check_subtree(node->next_sibling, tree_vec, recs_vec, r_recs,
+                            og_muts_idx, sigma, n, loss_vec, k_loss);
+
+  if (node->recurrent == 1) {
+    // check if valid
+    bool valid = is_recurrence_valid(node);
+    // check if the og is valid, if it's not delete the recurrent
+    node_t *og_mut_node = vector_get(tree_vec, og_muts_idx[node->mut_index]);
+
+    if(node->mut_index != og_mut_node->mut_index){
+      exit(0);
+    }
+
+    int x = og_muts_idx[node->mut_index];
+    if (x == -1){
+      valid = false;
+    }
+    bool og_valid = is_recurrence_valid(og_mut_node);
+
     if (valid == false || og_valid == false) {
-      node_delete(node, tree_vec, recs_vec, r_recs, sigma, n);
-      // TODO: maybe check deletions?
+      if(vector_get(tree_vec, node->id) != NULL){
+        node_delete(node, tree_vec, recs_vec, r_recs, sigma, n);
+        check_subtree(node->parent, tree_vec, recs_vec, r_recs,
+                                  og_muts_idx, sigma, n, loss_vec, k_loss);
+      }
+    }
+  } else if (node->loss == 1) {
+
+    bool valid = is_loss_valid(node);
+    bool lost = is_already_lost(node, node->mut_index);
+
+    if (valid == false || lost == true) {
+      if(vector_get(tree_vec, node->id) != NULL){
+        node_delete(node, tree_vec, loss_vec, k_loss, sigma, n);
+        check_subtree(node->parent, tree_vec, recs_vec, r_recs,
+                                  og_muts_idx, sigma, n, loss_vec, k_loss);
+      }
     }
   }
 }
 
-void check_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
+node_t *climb_tree(node_t *node, vector *tree_vec, bool *back, node_t *res){
+
+  if(node == NULL){
+    *back = true;
+    return NULL;
+  }
+
+  node_t* par = node->parent;
+
+  if(*back == false)
+    res = climb_tree(par, tree_vec, back, res);
+
+ if(*back == true && node->recurrent == 1){
+    *back = false;
+    return node;
+  }
+
+  return res;
+}
+
+void check_tree(node_t *node, vector *tree_vec, vector *recs_vec,
                                int *r_recs, int *og_muts_idx, int *sigma,
-                               int n) {
+                               int n, vector *loss_vec, int *k_loss) {
 
   if (node == NULL)
     return;
 
-  node_t* par = node->parent;
+  node_t* test;
+  node_t* test2;
 
-  while(par != NULL){
-    if(par->recurrent == 1){
-      check_subtree_recurrences(par, tree_vec, recs_vec, r_recs, og_muts_idx,
-                              sigma, n);
-      return;
-    }
-    par = par->parent;
+  bool gino = false;
+
+  test2 = climb_tree(node, tree_vec, &gino, test);
+
+  if(test2 != NULL){
+    if(test2->recurrent == 1 && is_ancestor(node, test2))
+    check_subtree(test2, tree_vec, recs_vec, r_recs, og_muts_idx,
+                            sigma, n, loss_vec, k_loss);
+    return;
   }
-
-  check_subtree_recurrences(node, tree_vec, recs_vec, r_recs, og_muts_idx,
-                          sigma, n);
+  check_subtree(node, tree_vec, recs_vec, r_recs, og_muts_idx,
+                          sigma, n, loss_vec, k_loss);
 }
 
 int prune_regraft(node_t *prune, node_t *regraft, node_t *root,
@@ -581,9 +652,8 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
                                    MAX_LOSSES);
 
         if (bm_res == 0) {
-          check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
-          check_recurrences(node_res, tree_vec, rec_vec, r_recs,
-                                    original_muts_idx, sigma, n);
+          check_tree(node_res, tree_vec, rec_vec, r_recs,
+                                    original_muts_idx, sigma, n, loss_vec, k_loss);
         }
       } else {
         // Add recurrent-mutation
@@ -599,9 +669,8 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         // only if correct
         if (rec_res == 0) {
         //  print_tree(root, 0.0);
-          check_recurrences(node_res, tree_vec, rec_vec, r_recs,
-                                      original_muts_idx, sigma, n);
-          check_subtree_losses(node_res, tree_vec, loss_vec, k_loss, sigma, n);
+          check_tree(node_res, tree_vec, rec_vec, r_recs,
+                                      original_muts_idx, sigma, n, loss_vec, k_loss);
         }
       }
     } else if (move < 0.50 && (k > 0 || r > 0)) {
@@ -629,6 +698,9 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         node_res = vector_get(loss_vec, ip);
 
         node_delete(node_res, tree_vec, loss_vec, k_loss, sigma, n);
+
+        check_tree(node_res->parent, tree_vec, rec_vec, r_recs, original_muts_idx,
+                        sigma, n, loss_vec, k_loss);
       } else {
         // Delete a recurrent mutation
         node_t *node_res = NULL;
@@ -641,6 +713,9 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         node_res = vector_get(rec_vec, ip);
 
         node_delete(node_res, tree_vec, rec_vec, r_recs, sigma, n);
+
+        check_tree(node_res->parent, tree_vec, rec_vec, r_recs, original_muts_idx,
+                        sigma, n, loss_vec, k_loss);
       }
     } else if ((move < 0.75 && (k > 0 || r > 0)) ||
                (move < 0.50 && (k == 0 && r == 0))) {
@@ -680,13 +755,11 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
       original_muts_idx[u->mut_index] = original_muts_idx[v->mut_index];
       original_muts_idx[v->mut_index] = ori_mut_tmp;
 
-      check_recurrences(u, tree_vec, rec_vec, r_recs, original_muts_idx,
-                      sigma, n);
-      check_recurrences(v, tree_vec, rec_vec, r_recs, original_muts_idx,
-                      sigma, n);
+      check_tree(u, tree_vec, rec_vec, r_recs, original_muts_idx,
+                      sigma, n, loss_vec, k_loss);
+      check_tree(v, tree_vec, rec_vec, r_recs, original_muts_idx,
+                      sigma, n, loss_vec, k_loss);
 
-      check_subtree_losses(u, tree_vec, loss_vec, k_loss, sigma, n);
-      check_subtree_losses(v, tree_vec, loss_vec, k_loss, sigma, n);
 
     } else {
       // Prune-regraft two random nodes
@@ -731,10 +804,9 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
         child = child->next_sibling;
       }
-      check_recurrences(prune_res, tree_vec, rec_vec, r_recs,
-                      original_muts_idx, sigma, n);
+      check_tree(prune_res, tree_vec, rec_vec, r_recs,
+                      original_muts_idx, sigma, n, loss_vec, k_loss);
 
-      check_subtree_losses(prune_res, tree_vec, loss_vec, k_loss, sigma, n);
     }
   }
 }

@@ -88,19 +88,30 @@ bool pop(int *stack, int *top){
 }
 
 bool is_already_lost(node_t *node, int mut_index) {
-  node_t *par = node->parent;
-  int status = 0;
+  int stack[100];
+  int top = 0;
+  bool check;
 
+  if(node == NULL)
+    return true;
+  node_t *par = node->parent;
   while (par != NULL) {
-    if (par->mut_index == mut_index){
-      if(par->loss == 1)
-        status--;
-      else
-        status++;
+    if (par->mut_index == mut_index) {
+      if (par->loss == 1){
+        check = pop(stack, &top);
+        if(check == false)
+          return true;
       }
+      else{
+        if(top == 0)
+          push(mut_index, stack, &top);
+        else
+          return true;
+      }
+    }
     par = par->parent;
   }
-  if (status == 0)
+  if (top == 0)
     return true;
 
   return false;
@@ -130,7 +141,10 @@ bool is_recurrence_valid(node_t *recurrence) {
   while (par != NULL) {
     if (par->mut_index == recurrence->mut_index) {
       if (par->loss == 1)
-        push(recurrence->mut_index, stack, &top);
+        if(top == 0)
+          push(recurrence->mut_index, stack, &top);
+        else
+          return false;
       else{
         check = pop(stack, &top);
         if(check == false)
