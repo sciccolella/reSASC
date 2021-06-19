@@ -94,7 +94,9 @@ bool is_already_lost(node_t *node, int mut_index) {
 
   if(node == NULL)
     return true;
+
   node_t *par = node->parent;
+  
   while (par != NULL) {
     if (par->mut_index == mut_index) {
       if (par->loss == 1){
@@ -136,8 +138,9 @@ bool is_recurrence_valid(node_t *recurrence) {
 
   if(recurrence == NULL)
     return false;
+
   node_t *par = recurrence->parent;
-  int status = 0;
+
   while (par != NULL) {
     if (par->mut_index == recurrence->mut_index) {
       if (par->loss == 1)
