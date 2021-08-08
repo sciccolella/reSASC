@@ -88,7 +88,7 @@ bool pop(int *stack, int *top){
 }
 
 bool is_already_lost(node_t *node, int mut_index) {
-  int stack[100];
+  int stack[2];
   int top = 0;
   bool check;
 
@@ -96,7 +96,7 @@ bool is_already_lost(node_t *node, int mut_index) {
     return true;
 
   node_t *par = node->parent;
-  
+
   while (par != NULL) {
     if (par->mut_index == mut_index) {
       if (par->loss == 1){
@@ -132,7 +132,7 @@ bool is_loss_valid(node_t *loss) {
 
 // This assumes that losses are valid
 bool is_recurrence_valid(node_t *recurrence) {
-  int stack[100];
+  int stack[2];
   int top = 0;
   bool check;
 

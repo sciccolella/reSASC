@@ -44,59 +44,6 @@ int random_assignment(int MAX) {
   return (int)(randval % (MAX + 1));
 }
 
-/*void check_subtree_losses(node_t *node, vector *tree_vec, vector *loss_vec,
-                          int *k_loss, int *sigma, int n) {
-  if (node == NULL)
-    return;
-
-  check_subtree_losses(node->first_child, tree_vec, loss_vec, k_loss, sigma, n);
-  check_subtree_losses(node->next_sibling, tree_vec, loss_vec, k_loss, sigma,
-                       n);
-
-  if (node->loss == 1) {
-    bool valid = is_loss_valid(node);
-    bool lost = is_already_lost(node, node->mut_index);
-
-    if (valid == false || lost == true) {
-      if(vector_get(tree_vec, node->id) != NULL){
-        node_delete(node, tree_vec, loss_vec, k_loss, sigma, n);
-      }
-    }
-  }
-}
-
-void check_subtree_recurrences(node_t *node, vector *tree_vec, vector *recs_vec,
-                               int *r_recs, int *og_muts_idx, int *sigma,
-                               int n) {
-  if (node == NULL)
-    return;
-  check_subtree_recurrences(node->first_child, tree_vec, recs_vec, r_recs,
-                            og_muts_idx, sigma, n);
-  check_subtree_recurrences(node->next_sibling, tree_vec, recs_vec, r_recs,
-                            og_muts_idx, sigma, n);
-
-  if (node->recurrent == 1) {
-    // check if valid
-    bool valid = is_recurrence_valid(node);
-    // check if the og is valid, if it's not delete the recurrent
-    node_t *og_mut_node = vector_get(tree_vec, og_muts_idx[node->mut_index]);
-
-    if(node->mut_index != og_mut_node->mut_index){
-      exit(0);
-    }
-
-    int x = og_muts_idx[node->mut_index];
-    if (x == -1){
-      valid = false;
-    }
-    bool og_valid = is_recurrence_valid(og_mut_node);
-
-    if (valid == false || og_valid == false)
-      if(vector_get(tree_vec, node->id) != NULL)
-        node_delete(node, tree_vec, recs_vec, r_recs, sigma, n);
-  }
-}*/
-
 node_t *climb_tree(node_t *node, vector *tree_vec, bool *back, node_t *res){
 
   if(node == NULL){
@@ -161,11 +108,11 @@ void check_subtree(node_t *node, vector *tree_vec, vector *recs_vec,
 
           check_subtree(res, tree_vec, recs_vec, r_recs,
                                     og_muts_idx, sigma, n, loss_vec, k_loss);
-          } else {
+        } else {
 
-            check_subtree(par, tree_vec, recs_vec, r_recs,
-                                      og_muts_idx, sigma, n, loss_vec, k_loss);
-          }
+          check_subtree(par, tree_vec, recs_vec, r_recs,
+                                    og_muts_idx, sigma, n, loss_vec, k_loss);
+        }
       }
     }
   } else if (node->loss == 1 && node->id != 0) {
@@ -185,11 +132,11 @@ void check_subtree(node_t *node, vector *tree_vec, vector *recs_vec,
 
           check_subtree(res, tree_vec, recs_vec, r_recs,
                                     og_muts_idx, sigma, n, loss_vec, k_loss);
-          } else {
+        } else {
 
-            check_subtree(par, tree_vec, recs_vec, r_recs,
-                                      og_muts_idx, sigma, n, loss_vec, k_loss);
-          }
+          check_subtree(par, tree_vec, recs_vec, r_recs,
+                                    og_muts_idx, sigma, n, loss_vec, k_loss);
+        }
       }
     }
   }
