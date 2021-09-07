@@ -57,6 +57,13 @@ This optional file specifies the prior loss probability of the mutations (parame
 An example of the mutations' name file can be seen in [gammas.txt](examples/gammas.txt).
 A single FN rate can be specified directly when running the program, e.g. `-g 0.01`.
 
+**Prior recurrent file**
+
+This optional file specifies the prior loss probability of the mutations (parameter `-d`). Each mutation's prior must be on a different line (separated by `\n`), and the probabilities are assigned to columns from left to right in the input file. If this file is not provided, it is possible to select a single float value that will be interpreted as the prior recurrent probability for each mutation. If the value is not provided it will be set to 1 by default.
+
+An example of the mutations' name file can be seen in [deltas.txt](examples/deltas.txt).
+A single FN rate can be specified directly when running the program, e.g. `-d 0.01`.
+
 
 Usage
 ----------
@@ -66,16 +73,19 @@ Usage
 - `-n [INT]`: Number of cells in the input file.
 - `-m [INT]`: Number of mutations in the input file.
 - `-k [INT]`: K value of Dollo(k) model used as phylogeny tree.
+- `-k [INT]`: R value of Dollo(r) model used as pgylogeny tree.
 - `-a [FLOAT/STRING]`: False Negative rate in the input file or path of the file containing different FN rates for each mutations.
 - `-b [FLOAT]`: False Positive rate in the input file.
 - `-i [STRING]`: Path of the input file.
 
 **Model parameters (optional)**
-- `-d [INT]`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
+- `-z [INT]`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
+- `-c [INT]`: Maximum number of total recurrences allowed in the solution. BY default the value is set to have no restition (+INF).
 - `-e [STRING]`: Path of the mutations' name file. If this parameter is not used then the mutation will be named progressively from `1`.
 - `-E [STRING]`: Path of the cells' name file. If this parameter is not used then the cells will be named progressively from `1`.
 - `-g [FLOAT/STRING]`: Loss rate in the input file or path of the file containing different GAMMA rates for each mutations.
-- `-r [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
+- `-d [FLOAT/STRING]`: Recurrent rate in the input file or path of the file containing different DELTA rates for each mutations.
+- `-R [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
 - `-M`: Force sasc to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
 
 **Output parameters (optional)**
@@ -88,9 +98,10 @@ Usage
 - `-p [INT]`: Total number of cores to be used by the tool.
 
 **Error learning  parameters (optional)**
-- `-B [FLOAT]`: Standard deviation for new FP discovery. [Disabled by default.]
 - `-A [FLOAT]`: Standard deviation for new FN discovery. [Disabled by default.]
+- `-B [FLOAT]`: Standard deviation for new FP discovery. [Disabled by default.]
 - `-G [FLOAT]`: Standard deviation for new GAMMA discovery. [Disabled by default.]
+- `-D [FLOAT]`: Standard deviation for new DELTA discovery. [Disabled by default.]
 
 Output
 ---------
@@ -114,7 +125,7 @@ SASC can then be run using the previously described parameters. Here we show a l
 
 **Childhood Lymphoblastic Leukemia (patient 4)**
 ```bash
-./sasc -i data/real/gawad/pat4.txt -m 78 -n 143 -a 0.3 -b 0.001 -k 3 -d 5 -e data/real/gawad/pat4_mut.txt 
+./sasc -i data/real/gawad/pat4.txt -m 78 -n 143 -a 0.3 -b 0.001 -k 3 -z 5 -e data/real/gawad/pat4_mut.txt 
 ```
 
 The command specifies a Dollo-3 phylogeny with a maximum of 5 deletions in the tree, a single FN rate of `0.3`, no prior loss probability (default to `1`) and mutations names specified in the file `data/real/gawad/pat4_mut.txt`.
@@ -122,13 +133,17 @@ The command specifies a Dollo-3 phylogeny with a maximum of 5 deletions in the t
 **MGH36 with different FN rates and monoclonality**
 
 ```bash
-./sasc -i data/real/MGH36/MGH36_scs.txt -m 77 -n 579 -a data/real/MGH36/MGH36_fn-rates.txt -b 0.005 -k 0 -e data/real/MGH36/MGH36_snv-names.txt -E data/real/MGH36/MGH36_cell-names.txt -l -x -r 1 -M
+./sasc -i data/real/MGH36/MGH36_scs.txt -m 77 -n 579 -a data/real/MGH36/MGH36_fn-rates.txt -b 0.005 -k 0 -e data/real/MGH36/MGH36_snv-names.txt -E data/real/MGH36/MGH36_cell-names.txt -l -x -R 1 -M
 ```
 The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in file `data/real/MGH36/MGH36_fn-rates.txt`, mutation names in `data/real/MGH36/MGH36_snv-names.txt`, cell names in `data/real/MGH36/MGH36_cell-names.txt`, output of mutational tree with cells as leaves (`-l`), output of the expected matrix (`-x`) and a total of 1 repetition (`-r 1`).
 
 **Simulation with different FN rates and Prior values and Error Learnign**
 ```bash
-./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -d 3 -a examples/alphas.txt -g examples/gammas.txt -b 0.0003 -A 0.2 -G 0.05
+./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -z 3 -a examples/alphas.txt -g examples/gammas.txt -b 0.0003 -A 0.2 -G 0.05
+```
+**Simulation with different FN rates and Prior values and Error Learnign and Recurrent learning**
+```bash
+./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -r 2 -R 2 -z 3 -c 4 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05 -D 0.02
 ```
 
 The command specifies a Dollo-1 phylogeny with a maximum of 3 deletions in the tree, FN rates detailed in `examples/alphas.txt`, prior loss probabilities in `examples/gammas.txt`, learning standard deviation of `0.2` for FN rate (`-A 0.2`) and learning standard deviation of `0.05` for prior loss (`-G 0.05`).
