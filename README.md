@@ -66,16 +66,19 @@ Usage
 - `-n [INT]`: Number of cells in the input file.
 - `-m [INT]`: Number of mutations in the input file.
 - `-k [INT]`: K value of Dollo(k) model used as phylogeny tree.
+- `-k [INT]`: R value of Dollo(r) model used as pgylogeny tree.
 - `-a [FLOAT/STRING]`: False Negative rate in the input file or path of the file containing different FN rates for each mutations.
 - `-b [FLOAT]`: False Positive rate in the input file.
 - `-i [STRING]`: Path of the input file.
 
 **Model parameters (optional)**
-- `-d [INT]`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
+- `-z [INT]`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
+- `-c [INT]`: Maximum number of total recurrences allowed in the solution. BY default the value is set to have no restition (+INF).
 - `-e [STRING]`: Path of the mutations' name file. If this parameter is not used then the mutation will be named progressively from `1`.
 - `-E [STRING]`: Path of the cells' name file. If this parameter is not used then the cells will be named progressively from `1`.
 - `-g [FLOAT/STRING]`: Loss rate in the input file or path of the file containing different GAMMA rates for each mutations.
-- `-r [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
+- `-d [FLOAT/STRING]`: Recurrent rate in the input file or path of the file containing different DELTA rates for each mutations.
+- `-R [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
 - `-M`: Force sasc to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
 
 **Output parameters (optional)**
@@ -88,9 +91,10 @@ Usage
 - `-p [INT]`: Total number of cores to be used by the tool.
 
 **Error learning  parameters (optional)**
-- `-B [FLOAT]`: Standard deviation for new FP discovery. [Disabled by default.]
 - `-A [FLOAT]`: Standard deviation for new FN discovery. [Disabled by default.]
+- `-B [FLOAT]`: Standard deviation for new FP discovery. [Disabled by default.]
 - `-G [FLOAT]`: Standard deviation for new GAMMA discovery. [Disabled by default.]
+- `-D [FLOAT]`: Standard deviation for new DELTA discovery. [Disabled by default.]
 
 Output
 ---------
@@ -129,6 +133,10 @@ The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in fi
 **Simulation with different FN rates and Prior values and Error Learnign**
 ```bash
 ./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -d 3 -a examples/alphas.txt -g examples/gammas.txt -b 0.0003 -A 0.2 -G 0.05
+```
+**Simulation with different FN rates and Prior values and Error Learnign and **
+```bash
+./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -d 3 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05
 ```
 
 The command specifies a Dollo-1 phylogeny with a maximum of 3 deletions in the tree, FN rates detailed in `examples/alphas.txt`, prior loss probabilities in `examples/gammas.txt`, learning standard deviation of `0.2` for FN rate (`-A 0.2`) and learning standard deviation of `0.05` for prior loss (`-G 0.05`).
