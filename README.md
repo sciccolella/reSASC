@@ -57,6 +57,13 @@ This optional file specifies the prior loss probability of the mutations (parame
 An example of the mutations' name file can be seen in [gammas.txt](examples/gammas.txt).
 A single FN rate can be specified directly when running the program, e.g. `-g 0.01`.
 
+**Prior recurrent file**
+
+This optional file specifies the prior loss probability of the mutations (parameter `-d`). Each mutation's prior must be on a different line (separated by `\n`), and the probabilities are assigned to columns from left to right in the input file. If this file is not provided, it is possible to select a single float value that will be interpreted as the prior recurrent probability for each mutation. If the value is not provided it will be set to 1 by default.
+
+An example of the mutations' name file can be seen in [deltas.txt](examples/deltas.txt).
+A single FN rate can be specified directly when running the program, e.g. `-d 0.01`.
+
 
 Usage
 ----------
@@ -136,7 +143,7 @@ The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in fi
 ```
 **Simulation with different FN rates and Prior values and Error Learnign and Recurrent learning**
 ```bash
-./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -r 2 -R 2 -z 3 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05 -D 0.02
+./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -r 2 -R 2 -z 3 -c 4 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05 -D 0.02
 ```
 
 The command specifies a Dollo-1 phylogeny with a maximum of 3 deletions in the tree, FN rates detailed in `examples/alphas.txt`, prior loss probabilities in `examples/gammas.txt`, learning standard deviation of `0.2` for FN rate (`-A 0.2`) and learning standard deviation of `0.05` for prior loss (`-G 0.05`).
