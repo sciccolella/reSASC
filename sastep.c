@@ -310,7 +310,8 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
 double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
                                  int **inmatrix, int n, int m, double *alpha,
                                  double beta, double *gammas, double* deltas,
-                                 int *k_loss, int *k_recurrent, int CORES) {
+                                 int *k_loss, int *k_recurrent, int CORES,
+                                 int succinct) {
   int node_max = vector_total(&tree_vec);
 
   int *nodes_genotypes = calloc(node_max * m, sizeof(int));
@@ -845,7 +846,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                int **inmatrix, double start_temp, double cooling_rate,
                double min_temp, int MAX_LOSSES, int MAX_RECURRENCES,
                elpar_t *el_params, double *gamma, int *Cj, int MONOCLONAL,
-               int CORES) {
+               int CORES, int succinct) {
   double current_temp = start_temp;
   double current_cooling_rate = cooling_rate;
 
@@ -891,9 +892,11 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
   double current_lh =
       greedy_tree_loglikelihood(current_root, tree_vec, current_sigma, inmatrix,
                                 n, m, alpha, beta, gamma, delta, current_kloss,
-                                current_rrecs, CORES);
+                                current_rrecs, CORES, succinct);
 
-  printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
+  if (succinct != 1)
+    printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
+
   while (current_temp > min_temp) {
     // Create a modifiable copy
     vector copy_tree_vec;
@@ -934,7 +937,9 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     assert(vector_total(&copy_tree_vec) == vector_total(&current_tree_vec));
     assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
     assert(vector_total(&copy_recs_vec) == vector_total(&current_recs_vec));
-    print_tree(copy_root, 10);
+
+    if (succinct != 1)
+      print_tree(copy_root, 10);
 
     neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, r,
              &copy_losses_vec, &copy_recs_vec, copy_kloss, copy_rrces,
@@ -945,11 +950,13 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     if (el_params->changed == 1) {
       new_lh = greedy_tree_loglikelihood(
           copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, el_params->a_xs,
-          el_params->b_x, el_params->g_xs, el_params->d_xs, copy_kloss, copy_rrces, CORES);
+          el_params->b_x, el_params->g_xs, el_params->d_xs, copy_kloss,
+          copy_rrces, CORES, succinct);
     } else {
       new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma,
                                          inmatrix, n, m, alpha, beta, gamma,
-                                         delta, copy_kloss, copy_rrces, CORES);
+                                         delta, copy_kloss, copy_rrces, CORES,
+                                         succinct);
     }
 
     double acceptance = accept_prob(current_lh, new_lh, current_temp);
@@ -975,7 +982,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
       assert(greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma,
                                        inmatrix, n, m, alpha, beta, gamma,
-                                       delta, copy_kloss, copy_rrces, CORES) == new_lh);
+                                       delta, copy_kloss, copy_rrces, CORES, succinct) == new_lh);
 
       current_lh = new_lh;
 
@@ -990,7 +997,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
       assert(greedy_tree_loglikelihood(
                  current_root, current_tree_vec, current_sigma, inmatrix, n, m,
-                 alpha, beta, gamma, delta, current_kloss, current_rrecs, CORES) == test_lh);
+                 alpha, beta, gamma, delta, current_kloss, current_rrecs, CORES, succinct) == test_lh);
     } else {
       if (el_params->changed == 1) {
         el_discard(el_params, beta);
@@ -1010,7 +1017,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     }
 
     ++step;
-    if (step % 1000 == 0 || step == 1) {
+    if ((step % 1000 == 0 || step == 1) && succinct != 1) {
       printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
     }
   }

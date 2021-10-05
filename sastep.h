@@ -63,13 +63,14 @@ int random_assignment(int MAX);
 double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
                                  int **inmatrix, int n, int m, double *alpha,
                                  double beta, double *gammas, double* deltas,
-                                 int *k_loss, int *k_recurrent, int CORES);
+                                 int *k_loss, int *k_recurrent, int CORES,
+                                 int succinct);
 
 node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                double *alpha, double beta, double* delta, int* Fj, int **inmatrix, double start_temp,
                double cooling_rate, double min_temp, int MAX_LOSSES,
                int MAX_RECURRENCES, elpar_t *el_params, double *gamma, int *Cj,
-               int MONOCLONAL, int CORES);
+               int MONOCLONAL, int CORES, int succinct);
 
 elpar_t *set_el_params(int single, int m, double *ALPHAS, double *a_mu,
                        double a_variance, double *a_xs, double *beta,
