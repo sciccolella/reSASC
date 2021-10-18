@@ -135,12 +135,68 @@ node_t *treecpy(node_t *root, vector *tree_vec, vector *losses_vec,
                 vector *recs_vec, int n, int *original_mut_idx);
 
 void node_detach(node_t *node);
+
+/**
+* @brief Check if the backmutation can be added
+*
+* @param loss Red node (backmutation)
+* @return bool Boolean that rapresent if loss can be added to the tree
+*/
 bool is_loss_valid(node_t *loss);
+
+/**
+* @brief Check if all the nodes in the subtree, that lead to node,
+* which have mutation index mut_index are valid
+*
+* @param node Red node (backmutation) that is being checked
+* @param mut_index Mutation index of the nodes that are being checked
+* @return bool Boolean that rapresent if the nodes checked are valid
+*/
 bool is_already_lost(node_t *node, int mut_index);
 
+/**
+* @brief Check if all the nodes in the subtree, that lead to recurrence,
+* which have mutation index mut_index are valid
+*
+* @param recurrence Green node (recurrent node)
+* @return bool Boolean that rapresent if the nodes checked are valid
+*/
 bool is_recurrence_valid(node_t *recurrence);
 
-void node_delete(node_t *node, vector *tree_vec, vector *loss_vec, int *k_loss,
+/**
+* @brief Check if all the nodes in the subtree under node are valid and if all
+* the limits have been respected
+*
+* @param node Root of the tree or subtree that is being checked
+* @param tree_vec Vector of *node_t
+* @param og_muts_idx Array of int that save the index of all the original mutations
+* @param m Number of mutations
+* @param k Max number of losses for each mutation
+* @param r Max number of recerrences for each mutation
+* @param MAX_LOSSES Max number of deletions allowed in the solution
+* @param MAX_RECURRENCES Max number of recurrences allowed in the solution
+* @param loss Register that contain the number of deletions counted so far
+* @param rec Register that contain the number of recerrences counted so far
+* @param k_loss Array of int that contains the numbers of deletions of each mutation
+* @param r_recs Array of int that contains the numbers of recurrences of each muation
+* @return bool Boolean that rapresent if the subtree under node is valid
+*/
+bool is_tree_valid(node_t *node, vector *tree_vec, int *og_muts_idx, int m, int k,
+                  int r, int MAX_LOSSES, int MAX_RECURRENCES, int* loss, int* rec,
+                  int *k_loss, int *r_recs);
+
+/**
+* @brief Delete a node from the tree, reattach the parent and the childrens and
+* delete the node from the vector
+*
+* @param node Node that is going to be deleted
+* @param tree_vec Vector of *node_t that rapresent the tree
+* @param vec Vector of *node_t
+* @param mut Array of int
+* @param sigma Array of int
+* @param n Number of cells
+*/
+void node_delete(node_t *node, vector *tree_vec, vector *node_vec, int *mut,
                  int *sigma, int n);
 
 #endif

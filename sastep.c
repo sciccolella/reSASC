@@ -803,6 +803,7 @@ elpar_t *set_el_params(int single_a, int m, double *ALPHAS, double *a_mu,
   params->single_alpha = single_a;
   params->M = m;
   params->changed = 0;
+  params->test = 1;
 
   params->ALPHAS = ALPHAS;
   params->a_mu = a_mu;
@@ -845,7 +846,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                int **inmatrix, double start_temp, double cooling_rate,
                double min_temp, int MAX_LOSSES, int MAX_RECURRENCES,
                elpar_t *el_params, double *gamma, int *Cj, int MONOCLONAL,
-               int CORES) {
+               int CORES, int test) {
   double current_temp = start_temp;
   double current_cooling_rate = cooling_rate;
 
@@ -893,7 +894,9 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                                 n, m, alpha, beta, gamma, delta, current_kloss,
                                 current_rrecs, CORES);
 
-  printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
+  if (test != 1)
+    printf("Step\t\t\tLog-likelihood\t\t\tTemperature\n");
+
   while (current_temp > min_temp) {
     // Create a modifiable copy
     vector copy_tree_vec;
@@ -934,18 +937,35 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     assert(vector_total(&copy_tree_vec) == vector_total(&current_tree_vec));
     assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
     assert(vector_total(&copy_recs_vec) == vector_total(&current_recs_vec));
-    print_tree(copy_root, 10);
+
+    if (test != 1)
+      print_tree(copy_root, 10);
 
     neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, r,
              &copy_losses_vec, &copy_recs_vec, copy_kloss, copy_rrces,
              MAX_LOSSES, MAX_RECURRENCES, copy_og_mut_idx, el_params,
              MONOCLONAL);
 
+    if (test == 1) {
+      bool test_tree;
+      int rec = 0;
+      int loss = 0;
+      test_tree = is_tree_valid(copy_root, &copy_tree_vec, copy_og_mut_idx, m , k, r,
+                          MAX_LOSSES, MAX_RECURRENCES, &loss, &rec, copy_kloss,
+                          copy_rrces);
+
+      if (test_tree == false) {
+        el_params->test = test_tree;
+        print_tree(copy_root, 1);
+      }
+    }
+
     double new_lh = 0;
     if (el_params->changed == 1) {
       new_lh = greedy_tree_loglikelihood(
           copy_root, copy_tree_vec, copy_sigma, inmatrix, n, m, el_params->a_xs,
-          el_params->b_x, el_params->g_xs, el_params->d_xs, copy_kloss, copy_rrces, CORES);
+          el_params->b_x, el_params->g_xs, el_params->d_xs, copy_kloss,
+          copy_rrces, CORES);
     } else {
       new_lh = greedy_tree_loglikelihood(copy_root, copy_tree_vec, copy_sigma,
                                          inmatrix, n, m, alpha, beta, gamma,
@@ -1010,7 +1030,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     }
 
     ++step;
-    if (step % 1000 == 0 || step == 1) {
+    if ((step % 1000 == 0 || step == 1) && test != 1) {
       printf("%d\t\t\t%lf\t\t\t%lf\n", step, current_lh, current_temp);
     }
   }

@@ -1,32 +1,10 @@
-/*
-    MIT License
-
-    Copyright (c) 2017-2019 Simone Ciccolella
-
-    Permission is hereby granted, free of charge, to any person obtaining a copy
-    of this software and associated documentation files (the "Software"), to
-   deal in the Software without restriction, including without limitation the
-   rights to use, copy, modify, merge, publish, distribute, sublicense, and/or
-   sell copies of the Software, and to permit persons to whom the Software is
-    furnished to do so, subject to the following conditions:
-
-    The above copyright notice and this permission notice shall be included in
-   all copies or substantial portions of the Software.
-
-    THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-    IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-    FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-    AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-    LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
-   FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS
-   IN THE SOFTWARE.
-*/
-
-#include "mt19937ar.h"
-#include "sastep.h"
-#include "tree.h"
-#include "utils.h"
-#include "vector.h"
+#include <stddef.h>
+#include "tap/basic.h"
+#include "../mt19937ar.h"
+#include "../sastep.h"
+#include "../tree.h"
+#include "../utils.h"
+#include "../vector.h"
 #include <float.h>
 #include <limits.h>
 #include <math.h>
@@ -35,16 +13,10 @@
 #include <string.h>
 #include <time.h>
 
-#ifdef NDEBUG
-#include <assert.h>
-#else
-#define assert(ignore) ((void)0)
-#endif
 
-int MAX_ID_TREE = 0;
-
-int main(int argc, char **argv) {
-  // Get CLI arguments
+int
+main(int argc, char **argv)
+{
   args_t *arguments = get_arguments(argc, argv);
 
   int N = arguments->n;
@@ -65,9 +37,6 @@ int main(int argc, char **argv) {
   int MONOCLONAL = arguments->monoclonal;
 
   char OUT_PATH[255];
-  sprintf(OUT_PATH, "%s_mlt.gv", remove_extension(arguments->infile));
-
-  printf("Starting SASC.\n");
 
   // Set random seed
   srand((unsigned)time(NULL));
@@ -309,7 +278,6 @@ int main(int argc, char **argv) {
   }
 
   for (int r = 0; r < REPETITIONS; r++) {
-    printf("Iteration: %d\n", r + 1);
 
     // Generate a RANDOM BTREE
     vector ml_tree_vec;
@@ -380,7 +348,7 @@ int main(int argc, char **argv) {
         anneal(root, ml_tree_vec, N, M, K, R, MULTI_ALPHAS, BETA, MULTI_DELTAS,
                Fj, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, MAX_LOSSES,
                MAX_RECURRENCES, el_params, MULTI_GAMMAS, Cj, MONOCLONAL,
-               arguments->cores, 0);
+               arguments->cores, 1);
 
     vector_free(&ml_tree_vec);
     vector_init(&ml_tree_vec);
@@ -411,59 +379,20 @@ int main(int argc, char **argv) {
     destroy_tree(ml_tree);
   }
 
-  //    for (int i = 0; i < M; i++) { printf("%d ", Cj[i]); } printf("\n");
   double best_calculated_likelihood = greedy_tree_loglikelihood(
       best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, MULTI_ALPHAS,
       BETA, MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores);
-  // printf("Maximum likelihood found: %f\n", best_calculated_likelihood);
 
-  if (arguments->print_leaves == 1) {
-    fprint_tree_leaves(best_tree, &best_tree_vec, best_sigma, N, OUT_PATH,
-                       best_calculated_likelihood, CELL_NAMES);
-  } else {
-    fprint_tree(best_tree, OUT_PATH, best_calculated_likelihood);
-  }
+  //Tests
 
-  printf("\nMaximum likelihood Tree found: %f\n", best_calculated_likelihood);
-  print_tree(best_tree, best_calculated_likelihood);
+  int test;
+  if (best_calculated_likelihood > 100 && best_calculated_likelihood < 200)
+    test = 1;
 
-  printf("Best cell assignment:\n");
-  for (int i = 0; i < N; i++) {
-    printf("%d ", best_sigma[i]);
-  }
-  printf("\n");
+  plan(2);
 
-  if (arguments->print_expected == 1) {
-    char OUT_MATRIX[255];
-    sprintf(OUT_MATRIX, "%s_out.txt", remove_extension(arguments->infile));
-
-    FILE *fpo;
-    fpo = fopen(OUT_MATRIX, "w+");
-    int gtpo[M];
-
-    for (int i = 0; i < N; i++) {
-      for (int j = 0; j < M; j++) {
-        gtpo[j] = 0;
-      }
-
-      node_t *node = vector_get(&best_tree_vec, best_sigma[i]);
-      if (node == NULL)
-        printf("i: %d --- sigma: %d", i, best_sigma[i]);
-      assert(node != NULL);
-      get_genotype_profile(vector_get(&best_tree_vec, best_sigma[i]), gtpo);
-
-      for (int j = 0; j < M; j++) {
-        fprintf(fpo, "%d ", gtpo[j]);
-      }
-      fprintf(fpo, "\n");
-    }
-    fclose(fpo);
-  }
-
-  printf("alpha: %lf\n", MULTI_ALPHAS[0]);
-  printf("beta: %lf\n", el_params->b_x);
-  printf("gamma: %lf\n", MULTI_GAMMAS[0]);
-  printf("delta: %lf\n", MULTI_DELTAS[0]);
+  ok(test, "The first test, check if best_calculated_likelihood is between a range");
+  ok(el_params->test, "The second test, test if all the trees created are valid");
 
   return 0;
 }

@@ -104,8 +104,6 @@ void
 print_help() {
     printf("SASC -- Simulated Anneling for cancer progression inference via Single Cell Sequencing.\n");
 
-    //TODO: update this
-
     printf("\vRequired arguments:\n");
     printf("\t-n CELLS\t\tNumber of cells in the input file.\n");
     printf("\t-m MUTATIONS\t\tNumber of mutations in the input file.\n");

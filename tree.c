@@ -162,6 +162,76 @@ bool is_recurrence_valid(node_t *recurrence) {
   return false;
 }
 
+bool is_tree_valid(node_t *node, vector *tree_vec, int *og_muts_idx, int m, int k,
+                  int r, int MAX_LOSSES, int MAX_RECURRENCES, int* loss, int* rec,
+                  int *k_loss, int *r_recs) {
+  if (node == NULL)
+    return true;
+
+  bool test;
+  test = is_tree_valid(node->first_child, tree_vec, og_muts_idx, m, k, r, MAX_LOSSES,
+                    MAX_RECURRENCES, loss, rec, k_loss, r_recs);
+
+  node_t *next_sibling = node->next_sibling;
+
+  if (test == false)
+    return test;
+
+  while(next_sibling != NULL){
+    test = is_tree_valid(next_sibling, tree_vec, og_muts_idx, m, k, r, MAX_LOSSES,
+                      MAX_RECURRENCES, loss, rec, k_loss, r_recs);
+    if (test == false)
+      return test;
+
+    next_sibling = next_sibling->next_sibling;
+  }
+
+  // Check recurrences and losses
+  if(node->recurrent == 1) {
+
+    bool valid = is_recurrence_valid(node);
+
+    node_t *og_mut_node = vector_get(tree_vec, og_muts_idx[node->mut_index]);
+
+    int x = og_muts_idx[node->mut_index];
+    if (x == -1)
+      valid = false;
+
+    bool og_valid = is_recurrence_valid(og_mut_node);
+
+    if (valid == false || og_valid == false)
+      return false;
+
+    *rec = *rec + 1;
+  } else if (node->loss == 1) {
+
+    bool valid = is_loss_valid(node);
+    bool lost = is_already_lost(node, node->mut_index);
+
+    if (valid == false || lost == true)
+      return false;
+
+    *loss = *loss + 1;
+  }
+  // Check max recurrences and losses
+  if (*rec > MAX_RECURRENCES || *loss > MAX_LOSSES)
+    return false;
+
+  // check max losses of every mutations
+  for (int i = 0; i < m; i++) {
+    if (k_loss[i] > k)
+      return false;
+  }
+
+  // check max recurrences of every mutations
+  for (int i = 0; i < m; i++) {
+    if (r_recs[i] > r)
+      return false;
+  }
+
+  return true;
+}
+
 void node_detach(node_t *node) {
   if (node->next_sibling == NULL) {
     if (node->previous_sibling != NULL) {
@@ -184,7 +254,7 @@ void node_detach(node_t *node) {
   }
 }
 
-void node_delete(node_t *node, vector *tree_vec, vector *loss_vec, int *k_loss,
+void node_delete(node_t *node, vector *tree_vec, vector *node_vec, int *mut,
                  int *sigma, int n) {
 
   node_t *par = node->parent;
@@ -194,7 +264,7 @@ void node_delete(node_t *node, vector *tree_vec, vector *loss_vec, int *k_loss,
   int del_id = node->id;
 
   assert(vector_total(tree_vec) > 0);
-  assert(vector_total(loss_vec) > 0);
+  assert(vector_total(node_vec) > 0);
   assert(vector_get(tree_vec, del_id) == node);
 
   vector_set(tree_vec, del_id, NULL);
@@ -212,13 +282,13 @@ void node_delete(node_t *node, vector *tree_vec, vector *loss_vec, int *k_loss,
     }
   }
 
-  k_loss[node->mut_index] -= 1;
+  mut[node->mut_index] -= 1;
 
-  // Delete from loss vector
-  for (int i = 0; i < vector_total(loss_vec); i++) {
-    node_t *x = vector_get(loss_vec, i);
+  // Delete from the vector
+  for (int i = 0; i < vector_total(node_vec); i++) {
+    node_t *x = vector_get(node_vec, i);
     if (x == node) {
-      vector_delete(loss_vec, i);
+      vector_delete(node_vec, i);
       break;
     }
   }
