@@ -343,7 +343,7 @@ main(int argc, char **argv)
     // get log-likelihood
     double lh = greedy_tree_loglikelihood(
         root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA,
-        MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores, 1);
+        MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores);
     node_t *ml_tree =
         anneal(root, ml_tree_vec, N, M, K, R, MULTI_ALPHAS, BETA, MULTI_DELTAS,
                Fj, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, MAX_LOSSES,
@@ -360,7 +360,7 @@ main(int argc, char **argv)
 
     double current_lh = greedy_tree_loglikelihood(
         ml_tree, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA,
-        MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores, 1);
+        MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores);
     // printf("Maximum log-likelihood: %lf\n", current_lh);
 
     if (current_lh > best_loglike) {
@@ -381,21 +381,18 @@ main(int argc, char **argv)
 
   double best_calculated_likelihood = greedy_tree_loglikelihood(
       best_tree, best_tree_vec, best_sigma, INPUT_MATRIX, N, M, MULTI_ALPHAS,
-      BETA, MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores, 1);
+      BETA, MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores);
 
-  //cose
+  //Tests
 
   int test;
   if (best_calculated_likelihood > 100 && best_calculated_likelihood < 200)
     test = 1;
 
-  plan(4);
+  plan(2);
 
-  ok(test, "the first test");
-  is_int(42, 42, NULL);
-  diag("a diagnostic, ignored by the harness");
-  ok(0, "a failing test");
-  skip("a skipped test");
+  ok(test, "The first test, check if best_calculated_likelihood is between a range");
+  ok(el_params->test, "The second test, test if all the trees created are valid");
 
   return 0;
 }
