@@ -156,7 +156,7 @@ bool is_already_lost(node_t *node, int mut_index);
 
 /**
 * @brief Check if all the nodes in the subtree, that lead to recurrence,
-* which have mutation index mut_index are valid
+* which have mutation index recurrece->mut_index are valid
 *
 * @param recurrence Green node (recurrent node)
 * @return bool Boolean that rapresent if the nodes checked are valid

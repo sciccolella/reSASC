@@ -13,6 +13,11 @@
 #include <string.h>
 #include <time.h>
 
+#ifdef NDEBUG
+#include <assert.h>
+#else
+#define assert(ignore) ((void)0)
+#endif
 
 int
 main(int argc, char **argv)
@@ -213,7 +218,8 @@ main(int argc, char **argv)
 
   for (int i = 0; i < length; i++) {
     unsigned long randval;
-    fread(&randval, sizeof(randval), 1, f);
+    int z = fread(&randval, sizeof(randval), 1, f);
+    assert(z == 1);
     init[i] = randval;
   }
   fclose(f);
@@ -344,6 +350,8 @@ main(int argc, char **argv)
     double lh = greedy_tree_loglikelihood(
         root, ml_tree_vec, SIGMA, INPUT_MATRIX, N, M, MULTI_ALPHAS, BETA,
         MULTI_GAMMAS, MULTI_DELTAS, Cj, Fj, arguments->cores);
+
+    printf("C1\n");
     node_t *ml_tree =
         anneal(root, ml_tree_vec, N, M, K, R, MULTI_ALPHAS, BETA, MULTI_DELTAS,
                Fj, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, MAX_LOSSES,
@@ -389,10 +397,15 @@ main(int argc, char **argv)
   if (best_calculated_likelihood > 100 && best_calculated_likelihood < 200)
     test = 1;
 
-  plan(2);
+  plan(4);
 
+  printf("C2\n");
   ok(test, "The first test, check if best_calculated_likelihood is between a range");
-  ok(el_params->test, "The second test, test if all the trees created are valid");
+  ok(el_params->test_tree, "The second test, test if all the trees created are valid");
+  ok(el_params->test_add_backmutation, "The third test, test if all the calls to add_back_mutation are valids");
+  ok(el_params->test_add_recurrent, "The fourth test, test if all the calls to add_recurrent_mutation are valids");
+
+  // TODO: remove runtests
 
   return 0;
 }

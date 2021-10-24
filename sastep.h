@@ -56,7 +56,9 @@ typedef struct el_params {
   double* d_xs;
 
   int changed;
-  bool test;
+  bool test_tree;
+  bool test_add_backmutation;
+  bool test_add_recurrent;
 } elpar_t;
 
 /**
@@ -122,7 +124,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                double *alpha, double beta, double* delta, int* Fj, int **inmatrix,
                double start_temp, double cooling_rate, double min_temp, int MAX_LOSSES,
                int MAX_RECURRENCES, elpar_t *el_params, double *gamma, int *Cj,
-               int MONOCLONAL, int CORES, int test);
+               int MONOCLONAL, int CORES, bool test);
 
 /**
 * @brief Function that creates el_params, struct that contains all the paramaters

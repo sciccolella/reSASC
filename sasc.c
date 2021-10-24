@@ -244,7 +244,8 @@ int main(int argc, char **argv) {
 
   for (int i = 0; i < length; i++) {
     unsigned long randval;
-    fread(&randval, sizeof(randval), 1, f);
+    int z = fread(&randval, sizeof(randval), 1, f);
+    assert(z == 1);
     init[i] = randval;
   }
   fclose(f);

@@ -289,6 +289,15 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
       return 1;
   }
 
+  // Check node
+  node_t *og_mut_node = vector_get(tree_vec, original_mut_idx[node->mut_index]);
+  int x = original_mut_idx[node->mut_index];
+  if (x == -1)
+    return 1;
+  printf("Cose\n");
+  if(genotype_candidate[og_mut_node->mut_index] == 0)
+    return 1;
+
   // The recurrence should be valid
   char label[255];
   strcpy(label, candidate_node->label);
@@ -597,7 +606,7 @@ void rec_mut_idx(node_t *node, int *original_muts_idx){
 void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
               int r, vector *loss_vec, vector *rec_vec, int *k_loss,
               int *r_recs, int MAX_LOSSES, int MAX_RECURRENCES,
-              int *original_muts_idx, elpar_t *el_params, int monoclonal) {
+              int *original_muts_idx, elpar_t *el_params, int monoclonal, bool test) {
   double el = genrand_real1();
   if (el < 0.1 && (el_params->a_variance > 0 || el_params->b_variance > 0 ||
                    el_params->g_variance > 0 || el_params->d_variance > 0)) {
@@ -629,6 +638,23 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         bm_res = add_back_mutation(node_res, tree_vec, m, k, k_loss, loss_vec,
                                    MAX_LOSSES);
 
+        // Test add_back_mutation
+        if (test == 1 && bm_res == 0) {
+          node_t *par = node_res->parent;
+          bool valid;
+          if (par->loss == 0)
+            valid = false;
+
+          valid = is_loss_valid(par);
+          bool lost = is_already_lost(par, par->mut_index);
+          print_tree(root, 2);
+
+          if (valid == false || lost == true) {
+            el_params->test_add_backmutation = false;
+            print_tree(root, 2);
+          }
+        }
+
         if (bm_res == 0) {
           check_tree(node_res, tree_vec, rec_vec, r_recs,
                                     original_muts_idx, sigma, n, loss_vec, k_loss);
@@ -643,8 +669,29 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
         rec_res = add_recurrent_mutation(node_res, tree_vec, m, r, r_recs, rec_vec,
                                           MAX_RECURRENCES, original_muts_idx);
-        // // This shouldn't be necessary, since recurrences should be added
-        // only if correct
+
+        // Test add_recurrent_mutation
+        if (test == 1 && rec_res == 0) {
+          node_t *par = node_res->parent;
+          bool valid;
+          if (par->recurrent == 0)
+            valid = false;
+
+          valid = is_recurrence_valid(par);
+
+          node_t *og_mut_node = vector_get(tree_vec, original_muts_idx[par->mut_index]);
+          int x = original_muts_idx[par->mut_index];
+          if (x == -1){
+            valid = false;
+          }
+          bool og_valid = is_recurrence_valid(og_mut_node);
+          print_tree(root, 3);
+
+          if (valid == false || og_valid == false) {
+            el_params->test_add_recurrent = false;
+            print_tree(root, 3);
+          }
+        }
         if (rec_res == 0) {
           check_tree(node_res, tree_vec, rec_vec, r_recs,
                                       original_muts_idx, sigma, n, loss_vec, k_loss);
@@ -803,7 +850,9 @@ elpar_t *set_el_params(int single_a, int m, double *ALPHAS, double *a_mu,
   params->single_alpha = single_a;
   params->M = m;
   params->changed = 0;
-  params->test = 1;
+  params->test_tree = 1;
+  params->test_add_backmutation = 1;
+  params->test_add_recurrent = 1;
 
   params->ALPHAS = ALPHAS;
   params->a_mu = a_mu;
@@ -846,7 +895,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                int **inmatrix, double start_temp, double cooling_rate,
                double min_temp, int MAX_LOSSES, int MAX_RECURRENCES,
                elpar_t *el_params, double *gamma, int *Cj, int MONOCLONAL,
-               int CORES, int test) {
+               int CORES, bool test) {
   double current_temp = start_temp;
   double current_cooling_rate = cooling_rate;
 
@@ -944,8 +993,9 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, r,
              &copy_losses_vec, &copy_recs_vec, copy_kloss, copy_rrces,
              MAX_LOSSES, MAX_RECURRENCES, copy_og_mut_idx, el_params,
-             MONOCLONAL);
+             MONOCLONAL, test);
 
+    // Test tree
     if (test == 1) {
       bool test_tree;
       int rec = 0;
@@ -955,7 +1005,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                           copy_rrces);
 
       if (test_tree == false) {
-        el_params->test = test_tree;
+        el_params->test_tree = test_tree;
         print_tree(copy_root, 1);
       }
     }
