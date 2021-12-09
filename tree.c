@@ -130,6 +130,37 @@ bool is_loss_valid(node_t *loss) {
   return false;
 }
 
+bool is_loss_possible(node_t *loss) {
+  int stack[2];
+  int top = 0;
+  bool check;
+
+  if(loss == NULL)
+    return false;
+
+  node_t *par = loss->parent;
+
+  while (par != NULL) {
+    if (par->mut_index == loss->mut_index) {
+      if (par->loss == 0)
+        if(top == 0)
+          push(loss->mut_index, stack, &top);
+        else
+          return false;
+      else{
+        check = pop(stack, &top);
+        if(check == false)
+          return false;
+      }
+    }
+    par = par->parent;
+  }
+  if (top == 1)
+    return true;
+
+  return false;
+}
+
 // This assumes that losses are valid
 bool is_recurrence_valid(node_t *recurrence) {
   int stack[2];
@@ -162,15 +193,12 @@ bool is_recurrence_valid(node_t *recurrence) {
   return false;
 }
 
-bool is_tree_valid(node_t *node, vector *tree_vec, int *og_muts_idx, int m, int k,
-                  int r, int MAX_LOSSES, int MAX_RECURRENCES, int* loss, int* rec,
-                  int *k_loss, int *r_recs) {
+bool is_tree_valid(node_t *node, vector *tree_vec, int *og_muts_idx) {
   if (node == NULL)
     return true;
 
   bool test;
-  test = is_tree_valid(node->first_child, tree_vec, og_muts_idx, m, k, r, MAX_LOSSES,
-                    MAX_RECURRENCES, loss, rec, k_loss, r_recs);
+  test = is_tree_valid(node->first_child, tree_vec, og_muts_idx);
 
   node_t *next_sibling = node->next_sibling;
 
@@ -178,8 +206,7 @@ bool is_tree_valid(node_t *node, vector *tree_vec, int *og_muts_idx, int m, int 
     return test;
 
   while(next_sibling != NULL){
-    test = is_tree_valid(next_sibling, tree_vec, og_muts_idx, m, k, r, MAX_LOSSES,
-                      MAX_RECURRENCES, loss, rec, k_loss, r_recs);
+    test = is_tree_valid(next_sibling, tree_vec, og_muts_idx);
     if (test == false)
       return test;
 
@@ -202,7 +229,6 @@ bool is_tree_valid(node_t *node, vector *tree_vec, int *og_muts_idx, int m, int 
     if (valid == false || og_valid == false)
       return false;
 
-    *rec = *rec + 1;
   } else if (node->loss == 1) {
 
     bool valid = is_loss_valid(node);
@@ -211,22 +237,6 @@ bool is_tree_valid(node_t *node, vector *tree_vec, int *og_muts_idx, int m, int 
     if (valid == false || lost == true)
       return false;
 
-    *loss = *loss + 1;
-  }
-  // Check max recurrences and losses
-  if (*rec > MAX_RECURRENCES || *loss > MAX_LOSSES)
-    return false;
-
-  // check max losses of every mutations
-  for (int i = 0; i < m; i++) {
-    if (k_loss[i] > k)
-      return false;
-  }
-
-  // check max recurrences of every mutations
-  for (int i = 0; i < m; i++) {
-    if (r_recs[i] > r)
-      return false;
   }
 
   return true;
