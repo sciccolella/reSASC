@@ -1,12 +1,26 @@
-test: test.o tap/basic.o
-	gcc test.o tap/basic.o ../mt19937ar.o ../sastep.o ../tree.o ../vector.o ../utils.o -o test -lm -fopenmp
+UNAME := $(shell uname)
 
-test.o: test.c
-	gcc -c test.c -o test.o
+ifeq ($(UNAME), Linux)
+	CC = /usr/bin/gcc
+	CFLAGS = -std=gnu99 -DNDEBUG -O3 -fopenmp
+endif
+ifeq ($(UNAME), Darwin)
+	CC = /usr/local/bin/gcc-8
+	CFLAGS = -std=c99 -DNDEBUG -O3 -fopenmp
+endif
 
-tap/basic.o: tap/basic.c
-	gcc -c tap/basic.c -o tap/basic.o
+.PHONY: all
+
+all: test
+
+test: test.o tap/basic.o ../mt19937ar.o ../sastep.o ../tree.o ../utils.o ../vector.o
+	@echo "* Linking test"
+	$(CC) $(CFLAGS) -o $@ $^ -lm
+
+%.o: %.c
+	@echo '* Compiling $<'
+	$(CC) $(CFLAGS) -o $@ -c $<
 
 .PHONY: clean
 clean:
-	rm test tap/*.o *.o
+	rm test tap/*.o *.o ../*.o

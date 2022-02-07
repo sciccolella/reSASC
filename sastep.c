@@ -188,7 +188,7 @@ int prune_regraft(node_t *prune, node_t *regraft, node_t *root,
 }
 
 int add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss,
-                      vector *losses_vec, int MAX_LOSSES) {
+                      vector *losses_vec, int MAX_LOSSES, int *original_mut_idx) {
   node_t *par = node->parent;
   if (par == NULL || par->parent == NULL)
     return 1;
@@ -196,36 +196,48 @@ int add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss,
   if (vector_total(losses_vec) >= MAX_LOSSES)
     return 1;
 
-  // Walk to root to select possible candidates for deletion
-  node_t *candidates[m * k + 1];
-  for (int i = 0; i < k * m + 1; i++) {
-    candidates[i] = NULL;
+  int genotype_candidate[m];
+  for (int i = 0; i < m; i++) {
+    genotype_candidate[i] = 0;
   }
-
-  int tot = 0;
+  // Walk to root to exclude nodes
   while (par != NULL) {
-    if (par->loss == 0) {
-      candidates[tot] = par;
-      tot++;
+    if (par->mut_index != -1) {
+      if (par->loss != 1)
+        genotype_candidate[par->mut_index] = is_loss_possible(par);
     }
+
     par = par->parent;
   }
 
-  int rand_del = random_assignment(tot - 2) + 1;
-  if (candidates[rand_del] == NULL)
-    return 1;
-  if (candidates[rand_del]->mut_index == -1)
+  int rand_del = 0;
+  do {
+    rand_del = random_assignment(m - 1);
+  } while (genotype_candidate[rand_del] != 0);
+
+  int node_id = original_mut_idx[rand_del];
+  node_t *candidate_node = vector_get(tree_vec, node_id);
+
+  // Is candidate ancestor of node
+  if(is_ancestor(node, candidate_node) == false)
     return 1;
 
+  // and check is not ancestor of other loss (if any)
+  int tot_rec = vector_total(losses_vec);
+  for (int i = 0; i < tot_rec; i++) {
+    node_t *n = vector_get(losses_vec, i);
+    if (n->loss == 1 && n->mut_index == rand_del && is_ancestor(n, candidate_node))
+      if(is_loss_possible(n) == 1)
+        return 1;
+  }
+
   char label[255];
-  strcpy(label, candidates[rand_del]->label);
-  if (k_loss[candidates[rand_del]->mut_index] >= k)
-    return 1;
-  if (is_already_lost(node, candidates[rand_del]->mut_index) == true)
+  strcpy(label, candidate_node->label);
+  if (k_loss[rand_del] >= k)
     return 1;
 
   node_t *node_del =
-      node_new(label, candidates[rand_del]->mut_index, vector_total(tree_vec));
+      node_new(label, rand_del, vector_total(tree_vec));
   node_del->loss = 1;
 
   vector_add(tree_vec, node_del);
@@ -257,10 +269,8 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
   // Walk to root to exclude nodes
   while (par != NULL) {
     if (par->mut_index != -1) {
-      if (par->loss == 1)
-        genotype_candidate[par->mut_index] -= 1;
-      else
-        genotype_candidate[par->mut_index] += 1;
+      if (par->loss != 1)
+        genotype_candidate[par->mut_index] = is_recurrence_valid(par);
     }
 
     par = par->parent;
@@ -280,14 +290,25 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
   node_t *candidate_node = vector_get(tree_vec, node_id);
 
   if (is_ancestor(candidate_node, node))
-    return 1;
+    if(is_recurrence_valid(candidate_node) == 1)
+      return 1;
   // and is not ancestor of any of its recurrences (if any)
   int tot_rec = vector_total(recurrents_vec);
   for (int i = 0; i < tot_rec; i++) {
     node_t *n = vector_get(recurrents_vec, i);
     if (n->recurrent == 1 && n->mut_index == rand_rec && is_ancestor(n, node))
-      return 1;
+      if(is_recurrence_valid(n) == 1)
+        return 1;
   }
+
+  // Check node
+  node_t *og_mut_node = vector_get(tree_vec, original_mut_idx[node->mut_index]);
+  int x = original_mut_idx[node->mut_index];
+  if (x == -1)
+    return 1;
+
+  if(genotype_candidate[og_mut_node->mut_index] == 0)
+    return 1;
 
   // The recurrence should be valid
   char label[255];
@@ -597,7 +618,7 @@ void rec_mut_idx(node_t *node, int *original_muts_idx){
 void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
               int r, vector *loss_vec, vector *rec_vec, int *k_loss,
               int *r_recs, int MAX_LOSSES, int MAX_RECURRENCES,
-              int *original_muts_idx, elpar_t *el_params, int monoclonal) {
+              int *original_muts_idx, elpar_t *el_params, int monoclonal, bool test) {
   double el = genrand_real1();
   if (el < 0.1 && (el_params->a_variance > 0 || el_params->b_variance > 0 ||
                    el_params->g_variance > 0 || el_params->d_variance > 0)) {
@@ -627,12 +648,25 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
         node_res = vector_get(tree_vec, ip);
 
         bm_res = add_back_mutation(node_res, tree_vec, m, k, k_loss, loss_vec,
-                                   MAX_LOSSES);
+                                   MAX_LOSSES, original_muts_idx);
 
-        if (bm_res == 0) {
-          check_tree(node_res, tree_vec, rec_vec, r_recs,
-                                    original_muts_idx, sigma, n, loss_vec, k_loss);
+        // Test add_back_mutation
+        if (test == 1 && bm_res == 0) {
+          node_t *par = node_res->parent;
+          bool valid;
+
+          valid = is_loss_valid(par);
+          bool lost = is_already_lost(par, par->mut_index);
+
+          if (valid == false || lost == true) {
+            el_params->test_add_backmutation = false;
+            print_tree(root, 2);
+          }
         }
+        /*if(bm_res == 0){
+          check_tree(node_res, tree_vec, rec_vec, r_recs,
+                                  original_muts_idx, sigma, n, loss_vec, k_loss);
+        }*/
       } else {
         // Add recurrent-mutation
         int rec_res = 1;
@@ -643,11 +677,25 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
         rec_res = add_recurrent_mutation(node_res, tree_vec, m, r, r_recs, rec_vec,
                                           MAX_RECURRENCES, original_muts_idx);
-        // // This shouldn't be necessary, since recurrences should be added
-        // only if correct
-        if (rec_res == 0) {
-          check_tree(node_res, tree_vec, rec_vec, r_recs,
-                                      original_muts_idx, sigma, n, loss_vec, k_loss);
+
+        // Test add_recurrent_mutation
+        if (test == 1 && rec_res == 0) {
+          node_t *par = node_res->parent;
+          bool valid;
+
+          valid = is_recurrence_valid(par);
+
+          node_t *og_mut_node = vector_get(tree_vec, original_muts_idx[par->mut_index]);
+          int x = original_muts_idx[par->mut_index];
+          if (x == -1){
+            valid = false;
+          }
+          bool og_valid = is_recurrence_valid(og_mut_node);
+
+          if (valid == false || og_valid == false) {
+            el_params->test_add_recurrent = false;
+            print_tree(root, 3);
+          }
         }
       }
     } else if (move < 0.50 && (k > 0 || r > 0)) {
@@ -803,7 +851,9 @@ elpar_t *set_el_params(int single_a, int m, double *ALPHAS, double *a_mu,
   params->single_alpha = single_a;
   params->M = m;
   params->changed = 0;
-  params->test = 1;
+  params->test_tree = 1;
+  params->test_add_backmutation = 1;
+  params->test_add_recurrent = 1;
 
   params->ALPHAS = ALPHAS;
   params->a_mu = a_mu;
@@ -846,7 +896,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                int **inmatrix, double start_temp, double cooling_rate,
                double min_temp, int MAX_LOSSES, int MAX_RECURRENCES,
                elpar_t *el_params, double *gamma, int *Cj, int MONOCLONAL,
-               int CORES, int test) {
+               int CORES, bool test) {
   double current_temp = start_temp;
   double current_cooling_rate = cooling_rate;
 
@@ -944,18 +994,38 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, r,
              &copy_losses_vec, &copy_recs_vec, copy_kloss, copy_rrces,
              MAX_LOSSES, MAX_RECURRENCES, copy_og_mut_idx, el_params,
-             MONOCLONAL);
+             MONOCLONAL, test);
 
+    // Test tree
     if (test == 1) {
-      bool test_tree;
+      bool test_tree = true;
       int rec = 0;
       int loss = 0;
-      test_tree = is_tree_valid(copy_root, &copy_tree_vec, copy_og_mut_idx, m , k, r,
-                          MAX_LOSSES, MAX_RECURRENCES, &loss, &rec, copy_kloss,
-                          copy_rrces);
+
+      test_tree = is_tree_valid(copy_root, &copy_tree_vec, copy_og_mut_idx);
+
+      // Check max recurrences and losses
+      for (int i = 0; i < m; i++) {
+        loss += copy_kloss[i];
+        rec += copy_rrces[i];
+      }
+      if (loss > MAX_LOSSES || rec > MAX_RECURRENCES)
+        test_tree = false;
+
+      // check max losses of every mutations
+      for (int i = 0; i < m; i++) {
+        if (copy_kloss[i] > k)
+          test_tree = false;
+      }
+
+      // check max recurrences of every mutations
+      for (int i = 0; i < m; i++) {
+        if (copy_rrces[i] > r)
+          test_tree = false;
+      }
 
       if (test_tree == false) {
-        el_params->test = test_tree;
+        el_params->test_tree = test_tree;
         print_tree(copy_root, 1);
       }
     }
