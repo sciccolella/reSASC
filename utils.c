@@ -108,7 +108,7 @@ print_help() {
     printf("\t-n CELLS\t\tNumber of cells in the input file.\n");
     printf("\t-m MUTATIONS\t\tNumber of mutations in the input file.\n");
     printf("\t-k DOLLOK\t\tK value of Dollo(k) model.\n");
-    printf("\t-r DOLLOR\t\tR value of Dollo(r) model.\n");
+    printf("\t-j CAMIN-SOKALJ\t\tj value of Camin-Sokal(j) model.\n");
     printf("\t-a ALPHA\t\tFalse Negative rate in the input file or path to FN rates file.\n");
     printf("\t-b BETA\t\t\tFalse Positive rate in the input file.\n");
     printf("\t-i INFILE\t\tPath of the input file.\n");
@@ -121,7 +121,7 @@ print_help() {
     printf("\t-E CELLFILE\t\tPath of the file containing cells' names.\n");
     printf("\t-g GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
     printf("\t-d DELTA\t\tRecurrent rate in the input file or path of the file containing different DELTA rates for each mutations.\n");
-    printf("\t-R REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
+    printf("\t-r REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
     printf("\t-M \t\t\tForce SASC to infer a monoclonal tree (default: false).\n");
 
     printf("\vOutput parameters (optional):\n");
@@ -179,7 +179,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:c:k:i:z:e:E:d:lxMr:S:C:A:B:G:D:R:p:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:c:k:i:z:e:E:d:lxMj:S:C:A:B:G:D:r:p:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -225,8 +225,8 @@ get_arguments(int cargc, char **cargsv) {
                 arguments->k = atoi(optarg);
                 inserted_args++;
                 break;
-            case 'r':
-                arguments->r = atoi(optarg);
+            case 'j':
+                arguments->j = atoi(optarg);
                 inserted_args++;
                 break;
             case 'i':
@@ -257,7 +257,7 @@ get_arguments(int cargc, char **cargsv) {
             case 'M':
                 arguments->monoclonal = 1;
                 break;
-            case 'R':
+            case 'r':
                 arguments->repetitions = atoi(optarg);
                 break;
             case 'v':
@@ -306,10 +306,10 @@ get_arguments(int cargc, char **cargsv) {
     if (arguments->max_del == 0)
         arguments->k = 0;
 
-    if (arguments->r == 0)
+    if (arguments->j == 0)
         arguments->max_copies = 0;
     if (arguments->max_copies == 0)
-        arguments->r = 0;
+        arguments->j = 0;
 
     return arguments;
 }

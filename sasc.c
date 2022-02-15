@@ -50,7 +50,7 @@ int main(int argc, char **argv) {
   int N = arguments->n;
   int M = arguments->m;
   int K = arguments->k;
-  int R = arguments->r;
+  int R = arguments->j;
 
   double ALPHA = arguments->alpha;
   double BETA = arguments->beta;
