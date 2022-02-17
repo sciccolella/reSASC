@@ -115,11 +115,11 @@ print_help() {
 
     printf("\vOptional arguments:\n");
     printf("\vModel parameters (optional):\n");
-    printf("\t-z DELETIONS\t\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
+    printf("\t-d DELETIONS\t\tMaximum number of total deletions allowed in the solution (default: INT_MAX).\n");
     printf("\t-c COPIES\t\tMaximum number of total recurrences allowed in the solution (default: INT_MAX).\n");
     printf("\t-e MUTFILE\t\tPath of the file containing mutations' names.\n");
     printf("\t-E CELLFILE\t\tPath of the file containing cells' names.\n");
-    printf("\t-g GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
+    printf("\t-q GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
     printf("\t-d DELTA\t\tRecurrent rate in the input file or path of the file containing different DELTA rates for each mutations.\n");
     printf("\t-r REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
     printf("\t-M \t\t\tForce SASC to infer a monoclonal tree (default: false).\n");
@@ -127,6 +127,7 @@ print_help() {
     printf("\vOutput parameters (optional):\n");
     printf("\t-l \t\t\tOutput a mutational tree with cells attached to it. Otherwise cells will not be present.\n");
     printf("\t-x \t\t\tIf this option is use, SASC will also output the expected matrix E.\n");
+    printf("\t-P \t\t\tPrefix for the output files.\n");
 
     printf("\vSimulated Annealing parameters (optional):\n");
     printf("\t-S STARTTEMP\t\tStarting temperature of the Simulated Annealing algorithm.\n");
@@ -171,6 +172,7 @@ get_arguments(int cargc, char **cargsv) {
 
     char *cvalue = NULL;
     int c;
+    int prefix = 0;
 
     double single_alpha;
     double single_gamma;
@@ -179,7 +181,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:c:k:i:z:e:E:d:lxMj:S:C:A:B:G:D:r:p:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:c:q:k:i:d:e:E:d:lxMj:S:C:A:B:G:D:r:p:P:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -212,7 +214,7 @@ get_arguments(int cargc, char **cargsv) {
                     strcpy(arguments->gamma_file, optarg);
                 }
                 break;
-            case 'd':
+            case 'q':
                 res = sscanf(optarg, "%lf", &single_delta);
                 if (res == 1) {
                     arguments->delta = single_delta;
@@ -233,6 +235,10 @@ get_arguments(int cargc, char **cargsv) {
                 strcpy(arguments->infile, optarg);
                 inserted_args++;
                 break;
+            case 'P':
+                strcpy(arguments->prefix, optarg);
+                prefix = 1;
+                break;
             case 'e':
                 strcpy(arguments->mut_file, optarg);
                 break;
@@ -242,7 +248,7 @@ get_arguments(int cargc, char **cargsv) {
             case 'h':
                 print_help();
                 break;
-            case 'z':
+            case 'd':
                 arguments->max_del = atoi(optarg);
                 break;
             case 'c':
@@ -310,6 +316,10 @@ get_arguments(int cargc, char **cargsv) {
         arguments->max_copies = 0;
     if (arguments->max_copies == 0)
         arguments->j = 0;
+
+    if (prefix == 0) {
+        strcpy(arguments->prefix, remove_extension(arguments->infile));
+    }
 
     return arguments;
 }
