@@ -137,7 +137,7 @@ print_help() {
     printf("\t-A ALPHASTDV\t\tStandard deviation for new FN discovery.\n");
     printf("\t-B BETASTDV\t\tStandard deviation for new FP discovery.\n");
     printf("\t-G GAMMASTDV\t\tStandard deviation for new GAMMA discovery.\n");
-    printf("\t-D DELTASTDV\t\tStandard deviation dor new DELTA discovery.\n");
+    printf("\t-Q DELTASTDV\t\tStandard deviation dor new DELTA discovery.\n");
 
     exit(EXIT_SUCCESS);
 }
@@ -181,7 +181,7 @@ get_arguments(int cargc, char **cargsv) {
 
     opterr = 0;
 
-    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:c:q:k:i:d:e:E:d:lxMj:S:C:A:B:G:D:r:p:P:")) != - 1) {
+    while ((c = getopt(cargc, cargsv, "hVm:n:a:b:g:c:q:k:i:d:e:E:d:lxMj:S:C:A:B:G:Q:r:p:P:")) != - 1) {
         switch(c) {
             case 'm':
                 arguments->m = atoi(optarg);
@@ -284,7 +284,7 @@ get_arguments(int cargc, char **cargsv) {
             case 'G':
                 sscanf(optarg, "%lf", &arguments->el_g_variance);
                 break;
-            case 'D':
+            case 'Q':
                 sscanf(optarg, "%lf", &arguments->el_d_variance);
                 break;
             case 'p':
