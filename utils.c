@@ -119,8 +119,8 @@ print_help() {
     printf("\t-c COPIES\t\tMaximum number of total recurrences allowed in the solution (default: INT_MAX).\n");
     printf("\t-e MUTFILE\t\tPath of the file containing mutations' names.\n");
     printf("\t-E CELLFILE\t\tPath of the file containing cells' names.\n");
-    printf("\t-q GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
-    printf("\t-d DELTA\t\tRecurrent rate in the input file or path of the file containing different DELTA rates for each mutations.\n");
+    printf("\t-g GAMMA\t\tLoss rate in the input file or path of the file containing different GAMMA rates for each mutations.\n");
+    printf("\t-q DELTA\t\tRecurrent rate in the input file or path of the file containing different DELTA rates for each mutations.\n");
     printf("\t-r REPETITIONS\t\tSet the total number of Simulated Annealing repetitions (default: 5).\n");
     printf("\t-M \t\t\tForce SASC to infer a monoclonal tree (default: false).\n");
 
@@ -158,6 +158,7 @@ get_arguments(int cargc, char **cargsv) {
     arguments->cooling_rate = 0.01;
 
     arguments->gamma = 1;
+    arguments->delta = 1;
 
     arguments->el_a_variance = 0;
     arguments->el_b_variance = 0;
