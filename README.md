@@ -72,8 +72,8 @@ Usage
 
 - `-n [INT]`: Number of cells in the input file.
 - `-m [INT]`: Number of mutations in the input file.
-- `-k [INT]`: K value of Dollo(k) model used as phylogeny tree.
-- `-k [INT]`: R value of Dollo(r) model used as pgylogeny tree.
+- `-k [INT]`: K value of Car-(k, r) model used as phylogeny tree.
+- `-k [INT]`: R value of Car-(k, r) model used as phylogeny tree.
 - `-a [FLOAT/STRING]`: False Negative rate in the input file or path of the file containing different FN rates for each mutations.
 - `-b [FLOAT]`: False Positive rate in the input file.
 - `-i [STRING]`: Path of the input file.
@@ -141,7 +141,7 @@ The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in fi
 ```bash
 ./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -z 3 -a examples/alphas.txt -g examples/gammas.txt -b 0.0003 -A 0.2 -G 0.05
 ```
-**Simulation with different FN rates and Prior values and Error Learnign and Recurrent learning**
+**Simulation with different FN rates and Prior values and Error Learnign and recurrent mutations**
 ```bash
 ./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -r 2 -R 2 -z 3 -c 4 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05 -D 0.02
 ```
