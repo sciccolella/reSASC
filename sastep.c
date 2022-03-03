@@ -660,7 +660,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
           if (valid == false || lost == true) {
             el_params->test_add_backmutation = false;
-            print_tree(root, 2);
+            // print_tree(root, 2);
           }
         }
         /*if(bm_res == 0){
@@ -694,7 +694,7 @@ void neighbor(node_t *root, vector *tree_vec, int *sigma, int m, int n, int k,
 
           if (valid == false || og_valid == false) {
             el_params->test_add_recurrent = false;
-            print_tree(root, 3);
+            // print_tree(root, 3);
           }
         }
       }
@@ -988,8 +988,8 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
     assert(vector_total(&copy_losses_vec) == vector_total(&current_losses_vec));
     assert(vector_total(&copy_recs_vec) == vector_total(&current_recs_vec));
 
-    if (test != 1)
-      print_tree(copy_root, 10);
+    // if (test != 1)
+    //   print_tree(copy_root, 10);
 
     neighbor(copy_root, &copy_tree_vec, copy_sigma, m, n, k, r,
              &copy_losses_vec, &copy_recs_vec, copy_kloss, copy_rrces,
@@ -1026,7 +1026,7 @@ node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
 
       if (test_tree == false) {
         el_params->test_tree = test_tree;
-        print_tree(copy_root, 1);
+        // print_tree(copy_root, 1);
       }
     }
 

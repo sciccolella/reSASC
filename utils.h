@@ -30,7 +30,7 @@ typedef struct Arguments {
     int n;
     int m;
     int k;
-    int r;
+    int j;
     int max_del;
     int max_copies;
     double alpha;
@@ -53,6 +53,7 @@ typedef struct Arguments {
     double el_g_variance;
     double el_d_variance;
     int cores;
+    char prefix[255];
 } args_t;
 
 void shuffle(int *array, int n);
