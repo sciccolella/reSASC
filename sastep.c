@@ -222,7 +222,7 @@ int add_back_mutation(node_t *node, vector *tree_vec, int m, int k, int *k_loss,
   if(is_ancestor(node, candidate_node) == false)
     return 1;
 
-  // and check is not ancestor of other loss (if any)
+  // and check losses that are ancestors (if any)
   int tot_rec = vector_total(losses_vec);
   for (int i = 0; i < tot_rec; i++) {
     node_t *n = vector_get(losses_vec, i);
@@ -292,7 +292,7 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
   if (is_ancestor(candidate_node, node))
     if(is_recurrence_valid(candidate_node) == 1)
       return 1;
-  // and is not ancestor of any of its recurrences (if any)
+  // and check recurrences that are ancestors (if any)
   int tot_rec = vector_total(recurrents_vec);
   for (int i = 0; i < tot_rec; i++) {
     node_t *n = vector_get(recurrents_vec, i);
@@ -307,7 +307,7 @@ int add_recurrent_mutation(node_t *node, vector *tree_vec, int m, int r,
   if (x == -1)
     return 1;
 
-  if(genotype_candidate[og_mut_node->mut_index] == 0)
+  if(node->mut_index == candidate_node->mut_index)
     return 1;
 
   // The recurrence should be valid
