@@ -72,25 +72,27 @@ Usage
 
 - `-n [INT]`: Number of cells in the input file.
 - `-m [INT]`: Number of mutations in the input file.
-- `-k [INT]`: K value of Car-(k, r) model used as phylogeny tree.
-- `-k [INT]`: R value of Car-(k, r) model used as phylogeny tree.
+- `-k [INT]`: k value of Dollo(k) model.
+- `-j [INT]`: j value of Camin-Sokal(j) model.
 - `-a [FLOAT/STRING]`: False Negative rate in the input file or path of the file containing different FN rates for each mutations.
 - `-b [FLOAT]`: False Positive rate in the input file.
 - `-i [STRING]`: Path of the input file.
 
 **Model parameters (optional)**
-- `-z [INT]`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
+- `-d [INT]`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
 - `-c [INT]`: Maximum number of total recurrences allowed in the solution. BY default the value is set to have no restition (+INF).
 - `-e [STRING]`: Path of the mutations' name file. If this parameter is not used then the mutation will be named progressively from `1`.
 - `-E [STRING]`: Path of the cells' name file. If this parameter is not used then the cells will be named progressively from `1`.
 - `-g [FLOAT/STRING]`: Loss rate in the input file or path of the file containing different GAMMA rates for each mutations.
-- `-d [FLOAT/STRING]`: Recurrent rate in the input file or path of the file containing different DELTA rates for each mutations.
+- `-q [FLOAT/STRING]`: Recurrent rate in the input file or path of the file containing different DELTA rates for each mutations.
 - `-R [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
 - `-M`: Force sasc to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
 
 **Output parameters (optional)**
 - `-l`: If this flag is used SASC will output a mutational tree with cells attached to it. Ortherwise cells will not present. Please note that this flag is needed if you plan to run the visualization tool afterwards.
 - `-x`: If this flag is used, SASC will additionally output the expected matrix E.
+- `-P [STRING]`: Prefix for the output files.
+
 
 **Simulated Annealing parameters (optional)**
 - `-S [FLOAT]`: Starting temperature of the Simulated Annealing algorithm.
@@ -101,7 +103,7 @@ Usage
 - `-A [FLOAT]`: Standard deviation for new FN discovery. [Disabled by default.]
 - `-B [FLOAT]`: Standard deviation for new FP discovery. [Disabled by default.]
 - `-G [FLOAT]`: Standard deviation for new GAMMA discovery. [Disabled by default.]
-- `-D [FLOAT]`: Standard deviation for new DELTA discovery. [Disabled by default.]
+- `-Q [FLOAT]`: Standard deviation for new DELTA discovery. [Disabled by default.]
 
 Output
 ---------
@@ -137,11 +139,11 @@ The command specifies a Dollo-3 phylogeny with a maximum of 5 deletions in the t
 ```
 The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in file `data/real/MGH36/MGH36_fn-rates.txt`, mutation names in `data/real/MGH36/MGH36_snv-names.txt`, cell names in `data/real/MGH36/MGH36_cell-names.txt`, output of mutational tree with cells as leaves (`-l`), output of the expected matrix (`-x`) and a total of 1 repetition (`-r 1`).
 
-**Simulation with different FN rates and Prior values and Error Learnign**
+**Simulation with different FN rates and Prior values and Error Learning**
 ```bash
 ./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -z 3 -a examples/alphas.txt -g examples/gammas.txt -b 0.0003 -A 0.2 -G 0.05
 ```
-**Simulation with different FN rates and Prior values and Error Learnign and recurrent mutations**
+**Simulation with different FN rates and Prior values and Error Learning and recurrent mutations**
 ```bash
 ./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -r 2 -R 2 -z 3 -c 4 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05 -D 0.02
 ```
