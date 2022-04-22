@@ -117,14 +117,13 @@ double greedy_tree_loglikelihood(node_t *root, vector tree_vec, int *sigma,
 * @param Cj Array that contains all the current numbers of losses of each mutations
 * @param MONOCLONAL Int that is 1 if the tree is monoclonal, 0 if not
 * @param CORES Total number of cores that can be used
-* @param test Bool that tells me if this a test
 * @return node_t* Return the root of the tree with the best likelihood found
 */
 node_t *anneal(node_t *root, vector tree_vec, int n, int m, int k, int r,
                double *alpha, double beta, double* delta, int* Fj, int **inmatrix,
                double start_temp, double cooling_rate, double min_temp, int MAX_LOSSES,
                int MAX_RECURRENCES, elpar_t *el_params, double *gamma, int *Cj,
-               int MONOCLONAL, int CORES, bool test);
+               int MONOCLONAL, int CORES);
 
 /**
 * @brief Function that creates el_params, struct that contains all the paramaters

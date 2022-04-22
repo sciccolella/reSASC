@@ -381,7 +381,7 @@ int main(int argc, char **argv) {
         anneal(root, ml_tree_vec, N, M, K, R, MULTI_ALPHAS, BETA, MULTI_DELTAS,
                Fj, INPUT_MATRIX, START_TEMP, COOLING_RATE, MIN_TEMP, MAX_LOSSES,
                MAX_RECURRENCES, el_params, MULTI_GAMMAS, Cj, MONOCLONAL,
-               arguments->cores, 0);
+               arguments->cores);
 
     vector_free(&ml_tree_vec);
     vector_init(&ml_tree_vec);
