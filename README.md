@@ -242,3 +242,6 @@ Let  _pr(i)_ be the set of nodes in the path from the root to _i_ let _st(i)_ be
 <p align="center">
 <img src="examples/support_definition.png" width="300">
 </p>
+
+## Reproducibility
+The paper's experiments can be reproduced following instruction in the [supplementary repository](https://github.com/sciccolella/reSASC_supplements)
