@@ -1,18 +1,20 @@
-Simulated Annealing Single Cell inference (SASC) tool -- cancer progression inference
+Simulated Annealing Single Cell inference (reSASC) tool -- cancer progression inference
 ===================
 
-SASC is  a new model and a robust framework based on Simulated Annealing for the inference of cancer progression from the SCS data.
-The main objective is to overcome the limitations of the Infinite Sites Assumption by introducing a version of the k-Dollo parsimony model which indeed allows the deletion of mutations from the evolutionary history of the tumor. 
+reSASC is  a new model and a robust framework based on Simulated Annealing for the inference of cancer progression from the SCS data.
+The main objective is to overcome the limitations of the Infinite Sites Assumption by introducing a 
+novel phylogeny model DCS(k,j) that is a combination of the Dollo-k and Camin-Sokal-j that allows
+both the deletion and recurrences of mutations from the evolutionary history of the tumor. 
 
 <!-- A detailed description of the framework can be found in published version of the paper [Inferring Cancer Progression from Single Cell Sequencing while allowing loss of mutations](#). -->
 
 Compile
 --------
 
-SASC can be downloaded and compiled easily using the following commands:
+reSASC can be downloaded and compiled easily using the following commands:
 ```bash
-git clone https://github.com/sciccolella/sasc.git
-cd sasc
+git clone git@github.com:sciccolella/reSASC.git
+cd reSASC
 make
 ```
 
@@ -59,10 +61,10 @@ A single FN rate can be specified directly when running the program, e.g. `-g 0.
 
 **Prior recurrent file**
 
-This optional file specifies the prior loss probability of the mutations (parameter `-d`). Each mutation's prior must be on a different line (separated by `\n`), and the probabilities are assigned to columns from left to right in the input file. If this file is not provided, it is possible to select a single float value that will be interpreted as the prior recurrent probability for each mutation. If the value is not provided it will be set to 1 by default.
+This optional file specifies the prior recurrent probability of the mutations (parameter `-q`). Each mutation's prior must be on a different line (separated by `\n`), and the probabilities are assigned to columns from left to right in the input file. If this file is not provided, it is possible to select a single float value that will be interpreted as the prior recurrent probability for each mutation. If the value is not provided it will be set to 1 by default.
 
 An example of the mutations' name file can be seen in [deltas.txt](examples/deltas.txt).
-A single FN rate can be specified directly when running the program, e.g. `-d 0.01`.
+A single FN rate can be specified directly when running the program, e.g. `-q 0.01`.
 
 
 Usage
@@ -72,24 +74,24 @@ Usage
 
 - `-n [INT]`: Number of cells in the input file.
 - `-m [INT]`: Number of mutations in the input file.
-- `-k [INT]`: k value of Dollo(k) model.
-- `-j [INT]`: j value of Camin-Sokal(j) model.
+- `-k [INT]`: k value of Dollo-k model.
+- `-j [INT]`: j value of Camin-Sokal-j model.
 - `-a [FLOAT/STRING]`: False Negative rate in the input file or path of the file containing different FN rates for each mutations.
 - `-b [FLOAT]`: False Positive rate in the input file.
 - `-i [STRING]`: Path of the input file.
 
 **Model parameters (optional)**
 - `-d [INT]`: Maximum number of total deletions allowed in the solution. By default the value is set to have no restriction (+INF).
-- `-c [INT]`: Maximum number of total recurrences allowed in the solution. BY default the value is set to have no restition (+INF).
+- `-c [INT]`: Maximum number of total recurrences allowed in the solution. BY default the value is set to have no restriction (+INF).
 - `-e [STRING]`: Path of the mutations' name file. If this parameter is not used then the mutation will be named progressively from `1`.
 - `-E [STRING]`: Path of the cells' name file. If this parameter is not used then the cells will be named progressively from `1`.
 - `-g [FLOAT/STRING]`: Loss rate in the input file or path of the file containing different GAMMA rates for each mutations.
 - `-q [FLOAT/STRING]`: Recurrent rate in the input file or path of the file containing different DELTA rates for each mutations.
 - `-R [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
-- `-M`: Force sasc to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
+- `-M`: Force reSASC to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
 
 **Output parameters (optional)**
-- `-l`: If this flag is used SASC will output a mutational tree with cells attached to it. Ortherwise cells will not present. Please note that this flag is needed if you plan to run the visualization tool afterwards.
+- `-l`: If this flag is used SASC will output a mutational tree with cells attached to it. Otherwise cells will not present. Please note that this flag is needed if you plan to run the visualization tool afterwards.
 - `-x`: If this flag is used, SASC will additionally output the expected matrix E.
 - `-P [STRING]`: Prefix for the output files.
 
@@ -107,15 +109,15 @@ Usage
 
 Output
 ---------
-SASC has three different output formats that can be toggled with different arguments.
+reSASC has three different output formats that can be toggled with different arguments.
 
 **Mutational Tree**
 
-This is the standard output; SASC will generate a mutational tree in DOT format with no cells attached as leaves of the tree. An example of this output is shown in [MGH36 mutational tree](examples/MGH36_scs_mlt_mutations_only.gv).
+This is the standard output; reSASC will generate a mutational tree in DOT format with no cells attached as leaves of the tree. An example of this output is shown in [MGH36 mutational tree](examples/MGH36_scs_mlt_mutations_only.gv).
 
 **Mutational Tree with cells as leaves**
 
-By toggling option `-l` SASC will instead output a mutational tree in DOT format with cells attached as leaves of the tree. An example can be found at [MGH36 mutational tree with cells](examples/MGH36_scs_mlt.gv).
+By toggling option `-l` reSASC will instead output a mutational tree in DOT format with cells attached as leaves of the tree. An example can be found at [MGH36 mutational tree with cells](examples/MGH36_scs_mlt.gv).
 
 **Expected Matrix**
 
@@ -153,7 +155,7 @@ The command specifies a Dollo-1 phylogeny with a maximum of 3 deletions in the t
 SASC-viz (Visualization tool)
 =============================
 
-The script `SASC-viz.py` can be used as a visualization tool and to apply operation to `SASC`'s output without needing to re run the tool. The tool will change the output of the tool only for visualization purposes. **Please note that you have to run SASC with the `-l` flag in order to use the tool.**
+The script `SASC-viz.py` can be used as a visualization tool and to apply operation to `reSASC`'s output without needing to re run the tool. The tool will change the output of the tool only for visualization purposes. **Please note that you have to run reSASC with the `-l` flag in order to use the tool.**
 
 Usage
 ----------
@@ -179,7 +181,7 @@ You are required to use either:
 - `--show-support`: show the _mutation support_ of each node.
 - `--collapse-support THRESHOLD`: if the support of a node _x_ is lower than the specified `THRESHOLD`, then _x_ is merged with its parent. This operation is performed in a bottom-up fashion starting from the leaves.
 - `--show-color`: if this flag is used, the nodes will be colored using a gradient scale from red to green based on the support.
-- `--sep STRING`: if this option is used the labels on the nodes will be separetad by `STRING`. Default is `,`.
+- `--sep STRING`: if this option is used the labels on the nodes will be separated by `STRING`. Default is `,`.
 
 **Output**
 
