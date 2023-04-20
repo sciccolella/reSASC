@@ -336,7 +336,7 @@ void print_tree_rec(node_t *node) {
   if (node->loss == 1)
     printf("\t\"%d\" [color=indianred1, style=filled, label=\"%s\"];\n",
            node->id, node->label);
-  if (node->recurrent == 1)
+  else if (node->recurrent == 1)
     printf("\t\"%d\" [color=green, style=filled, label=\"%s\"];\n", node->id,
            node->label);
   else
@@ -376,6 +376,9 @@ void fprint_tree_rec(node_t *node, FILE *fo) {
   if (node->loss == 1)
     fprintf(fo, "\t\"%d\" [color=indianred1, style=filled, label=\"%s\"];\n",
             node->id, node->label);
+  else if (node->recurrent == 1)
+    fprintf(fo, "\t\"%d\" [color=green, style=filled, label=\"%s\"];\n", node->id,
+           node->label);
   else
     fprintf(fo, "\t\"%d\" [label=\"%s\"];\n", node->id, node->label);
 }
