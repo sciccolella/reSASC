@@ -129,7 +129,7 @@ SASC can then be run using the previously described parameters. Here we show a l
 
 **Childhood Lymphoblastic Leukemia (patient 4)**
 ```bash
-./sasc -i data/real/gawad/pat4.txt -m 78 -n 143 -a 0.3 -b 0.001 -k 3 -z 5 -e data/real/gawad/pat4_mut.txt 
+./sasc -i data/real/gawad/pat4.txt -m 78 -n 143 -a 0.3 -b 0.001 -k 3 -d 5 -j 0 -e data/real/gawad/pat4_mut.txt 
 ```
 
 The command specifies a Dollo-3 phylogeny with a maximum of 5 deletions in the tree, a single FN rate of `0.3`, no prior loss probability (default to `1`) and mutations names specified in the file `data/real/gawad/pat4_mut.txt`.
@@ -137,7 +137,7 @@ The command specifies a Dollo-3 phylogeny with a maximum of 5 deletions in the t
 **MGH36 with different FN rates and monoclonality**
 
 ```bash
-./sasc -i data/real/MGH36/MGH36_scs.txt -m 77 -n 579 -a data/real/MGH36/MGH36_fn-rates.txt -b 0.005 -k 0 -e data/real/MGH36/MGH36_snv-names.txt -E data/real/MGH36/MGH36_cell-names.txt -l -x -R 1 -M
+./sasc -i data/real/MGH36/MGH36_scs.txt -m 77 -n 579 -a data/real/MGH36/MGH36_fn-rates.txt -b 0.005 -k 0 -j 0 -e data/real/MGH36/MGH36_snv-names.txt -E data/real/MGH36/MGH36_cell-names.txt -l -x -R 1 -M
 ```
 The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in file `data/real/MGH36/MGH36_fn-rates.txt`, mutation names in `data/real/MGH36/MGH36_snv-names.txt`, cell names in `data/real/MGH36/MGH36_cell-names.txt`, output of mutational tree with cells as leaves (`-l`), output of the expected matrix (`-x`) and a total of 1 repetition (`-r 1`).
 
@@ -147,7 +147,7 @@ The command specifies a Perfect Phylogeny (Dollo-0) with FN rates detailed in fi
 ```
 **Simulation with different FN rates and Prior values and Error Learning and recurrent mutations**
 ```bash
-./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -r 2 -R 2 -d 3 -c 4 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05 -D 0.02
+./sasc -i data/simulated/exp6-bimod/sim_21_scs.txt -m 50 -n 200 -k 1 -r 2 -j 2 -d 3 -c 4 -a examples/alphas.txt -g examples/gammas.txt -d examples/deltas.txt -b 0.0003 -A 0.2 -G 0.05 -Q 0.02
 ```
 
 The command specifies a Dollo-1 phylogeny with a maximum of 3 deletions in the tree, FN rates detailed in `examples/alphas.txt`, prior loss probabilities in `examples/gammas.txt`, learning standard deviation of `0.2` for FN rate (`-A 0.2`) and learning standard deviation of `0.05` for prior loss (`-G 0.05`).
