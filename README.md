@@ -8,9 +8,15 @@ both the deletion and recurrences of mutations from the evolutionary history of 
 
 <!-- A detailed description of the framework can be found in published version of the paper [Inferring Cancer Progression from Single Cell Sequencing while allowing loss of mutations](#). -->
 
-Compile
+Install
 --------
 
+### Requirements
+reSASC only requires a modern version of the `gcc` compiler and the `openmp` library.
+For Linux users it should be straightforward to install such depencies, while MacOS users might need to use `brew` or other package managers.
+Please note the MacOS users may need to change linking flags and/or path to the compiler in the `Makefile` for a correct compilation.
+
+### Compile
 reSASC can be downloaded and compiled easily using the following commands:
 ```bash
 git clone git@github.com:sciccolella/reSASC.git
