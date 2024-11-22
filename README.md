@@ -93,7 +93,7 @@ Usage
 - `-E [STRING]`: Path of the cells' name file. If this parameter is not used then the cells will be named progressively from `1`.
 - `-g [FLOAT/STRING]`: Loss rate in the input file or path of the file containing different GAMMA rates for each mutations.
 - `-q [FLOAT/STRING]`: Recurrent rate in the input file or path of the file containing different DELTA rates for each mutations.
-- `-R [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
+- `-r [INT]`: Set the total number of Simulated Annealing repetitions. Default is 5.
 - `-M`: Force reSASC to infer a monoclonal tree, i.e. a tree with only one node child of the germline. Default is not set.
 
 **Output parameters (optional)**
